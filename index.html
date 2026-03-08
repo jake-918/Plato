@@ -1,0 +1,2134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PLATO — Meal Planner</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e0e0e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PLATO">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+
+<!-- Splash screens for iPhone -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0e0e;
+  --surface: #161616;
+  --surface2: #1e1e1e;
+  --border: rgba(255,255,255,0.08);
+  --text: #f0ede6;
+  --muted: #7a7570;
+  --dim: #3a3632;
+  --italian: #e8553a;
+  --asian: #e8a030;
+  --mexican: #4caf78;
+  --american: #5b8de8;
+  --tag-lunch: #e8a030;
+  --tag-dinner: #e8553a;
+  --tag-snack: #4caf78;
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-bottom: var(--sab);
+}
+body::after {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999; opacity:0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.screen { display:none; }
+.screen.active { display:block; animation: screenIn 0.5s cubic-bezier(.16,1,.3,1) both; }
+@keyframes screenIn { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+/* NAV */
+nav {
+  position:sticky; top:0; z-index:200;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 40px; height:64px;
+  padding-top: var(--sat);
+  height: calc(64px + var(--sat));
+  background:rgba(14,14,14,0.92); backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo {
+  font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:0.12em;
+  color:var(--text); cursor:pointer;
+}
+.nav-logo em { color:var(--italian); font-style:normal; }
+.nav-right { display:flex; gap:10px; align-items:center; }
+.pill-btn {
+  font-family:'Outfit',sans-serif; font-size:0.8rem; font-weight:500;
+  padding:9px 20px; border-radius:100px; border:1px solid var(--border);
+  background:transparent; color:var(--muted); cursor:pointer; transition:all 0.2s;
+  letter-spacing:0.04em; display:flex; align-items:center; gap:6px;
+}
+.pill-btn:hover { background:var(--surface2); color:var(--text); border-color:rgba(255,255,255,0.18); }
+.pill-btn.accent { background:var(--text); color:var(--bg); border-color:var(--text); font-weight:600; }
+.pill-btn.accent:hover { background:#d8d4cc; }
+.plan-badge {
+  background:var(--italian); color:#fff; font-size:0.68rem; font-weight:700;
+  padding:2px 7px; border-radius:100px; display:none;
+}
+
+/* BREADCRUMB */
+.breadcrumb {
+  padding:13px 40px; display:flex; align-items:center; gap:8px;
+  font-size:0.76rem; color:var(--muted); border-bottom:1px solid var(--border);
+}
+.breadcrumb .crumb { cursor:pointer; transition:color 0.15s; }
+.breadcrumb .crumb:hover { color:var(--text); }
+.breadcrumb .sep { opacity:0.3; }
+.breadcrumb .active { color:var(--text); cursor:default; }
+
+/* HOME */
+.home-hero {
+  padding:72px 40px 52px; position:relative; overflow:hidden;
+}
+.home-hero::before {
+  content:''; position:absolute; top:-60px; right:-100px;
+  width:600px; height:600px; border-radius:50%;
+  background:radial-gradient(circle, rgba(232,85,58,0.06) 0%, transparent 70%);
+  pointer-events:none;
+}
+.hero-eyebrow {
+  font-size:0.72rem; font-weight:600; letter-spacing:0.2em; text-transform:uppercase;
+  color:var(--italian); margin-bottom:18px;
+  display:flex; align-items:center; gap:10px;
+}
+.hero-eyebrow::before { content:''; display:block; width:28px; height:1px; background:var(--italian); }
+.home-hero h1 {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(4rem,10vw,8rem); line-height:0.9; letter-spacing:0.04em;
+  color:var(--text); margin-bottom:28px;
+}
+.home-hero h1 .accent { color:var(--italian); }
+.home-hero p {
+  font-size:1.05rem; color:var(--muted); max-width:480px; line-height:1.75; margin-bottom:52px;
+}
+.cuisine-section-label {
+  font-size:0.7rem; font-weight:600; letter-spacing:0.18em; text-transform:uppercase;
+  color:var(--muted); padding:0 40px; margin-bottom:20px;
+}
+
+/* CUISINE GRID */
+.cuisine-strip {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:0;
+  border-top:1px solid var(--border); border-left:1px solid var(--border);
+}
+.cuisine-card {
+  border-right:1px solid var(--border); border-bottom:1px solid var(--border);
+  padding:36px 32px; cursor:pointer; position:relative; overflow:hidden;
+  transition:background 0.25s; min-height:280px;
+  display:flex; flex-direction:column; justify-content:flex-end;
+}
+.cuisine-card::before {
+  content:''; position:absolute; inset:0; opacity:0; transition:opacity 0.35s;
+}
+.cuisine-card.italian::before { background:linear-gradient(135deg,rgba(232,85,58,0.14),transparent); }
+.cuisine-card.asian::before   { background:linear-gradient(135deg,rgba(232,160,48,0.14),transparent); }
+.cuisine-card.mexican::before { background:linear-gradient(135deg,rgba(76,175,120,0.14),transparent); }
+.cuisine-card.american::before{ background:linear-gradient(135deg,rgba(91,141,232,0.14),transparent); }
+.cuisine-card:hover::before { opacity:1; }
+.cuisine-card:hover { background:var(--surface); }
+.cuisine-card .c-num {
+  position:absolute; top:20px; right:24px;
+  font-family:'Bebas Neue',sans-serif; font-size:5rem; line-height:1;
+  opacity:0.04; transition:opacity 0.3s; color:var(--text);
+}
+.cuisine-card:hover .c-num { opacity:0.08; }
+.cuisine-card .c-count {
+  position:absolute; top:22px; left:26px;
+  font-size:0.66rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase;
+  padding:4px 11px; border-radius:100px; border:1px solid var(--border); color:var(--muted);
+}
+.cuisine-card .c-emoji {
+  font-size:3.2rem; margin-bottom:18px; display:block;
+  transition:transform 0.3s cubic-bezier(.25,.8,.25,1);
+}
+.cuisine-card:hover .c-emoji { transform:scale(1.12) rotate(-4deg); }
+.cuisine-card h3 {
+  font-family:'Bebas Neue',sans-serif; font-size:2.2rem;
+  letter-spacing:0.06em; margin-bottom:6px;
+}
+.cuisine-card.italian h3 { color:var(--italian); }
+.cuisine-card.asian h3   { color:var(--asian); }
+.cuisine-card.mexican h3 { color:var(--mexican); }
+.cuisine-card.american h3{ color:var(--american); }
+.cuisine-card .c-sub { font-size:0.78rem; color:var(--muted); letter-spacing:0.04em; }
+.cuisine-card .c-arrow {
+  position:absolute; bottom:28px; right:28px;
+  width:38px; height:38px; border-radius:50%; border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; font-size:1rem;
+  opacity:0; transform:translateX(-8px); transition:all 0.25s;
+}
+.cuisine-card:hover .c-arrow { opacity:1; transform:translateX(0); }
+.home-footer {
+  display:flex; align-items:center; gap:14px;
+  margin:36px 40px 48px;
+}
+.home-footer-icon {
+  width:44px; height:44px; border-radius:11px; overflow:hidden; flex-shrink:0;
+  box-shadow:0 4px 16px rgba(0,0,0,0.4);
+}
+.home-footer-icon img { width:100%; height:100%; display:block; }
+.home-footer-text { display:flex; flex-direction:column; gap:2px; }
+.home-footer-name {
+  font-family:'Bebas Neue',sans-serif; font-size:1.1rem;
+  letter-spacing:0.08em; color:var(--text); line-height:1;
+}
+.home-footer-version {
+  font-size:0.68rem; font-weight:600; letter-spacing:0.12em;
+  text-transform:uppercase; color:var(--muted);
+}
+
+/* RECIPE SCREEN */
+.recipe-screen-inner { max-width:1400px; margin:0 auto; }
+.cuisine-header {
+  padding:48px 40px 0;
+  display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap;
+}
+.cuisine-header-left h2 {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(3rem,6vw,5.5rem); letter-spacing:0.05em; line-height:0.9; margin-bottom:10px;
+}
+.cuisine-header-left p { color:var(--muted); font-size:0.9rem; max-width:480px; line-height:1.65; }
+.cuisine-header-right { font-size:4.5rem; line-height:1; flex-shrink:0; }
+
+/* FILTER */
+.meal-filter {
+  display:flex; gap:8px; padding:24px 40px 32px;
+  border-bottom:1px solid var(--border); flex-wrap:wrap;
+}
+.filter-btn {
+  font-family:'Outfit',sans-serif; font-size:0.78rem; font-weight:500;
+  padding:8px 18px; border-radius:100px; border:1px solid var(--border);
+  background:transparent; color:var(--muted); cursor:pointer; transition:all 0.2s;
+  display:flex; align-items:center; gap:6px;
+}
+.filter-btn:hover { color:var(--text); border-color:rgba(255,255,255,0.22); }
+.filter-btn.active { color:var(--bg); border-color:transparent; font-weight:600; }
+.filter-btn.active.all    { background:var(--text); }
+.filter-btn.active.lunch  { background:var(--tag-lunch); }
+.filter-btn.active.dinner { background:var(--tag-dinner); }
+.filter-btn.active.snack  { background:var(--tag-snack); }
+
+/* RECIPE GRID */
+.recipe-grid {
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(320px,1fr));
+  gap:1px; background:var(--border);
+  margin:32px 40px 60px; border:1px solid var(--border);
+  border-radius:14px; overflow:hidden;
+}
+.recipe-card {
+  background:var(--surface); padding:28px; cursor:pointer;
+  transition:background 0.2s; position:relative;
+  display:flex; flex-direction:column;
+}
+.recipe-card:hover { background:var(--surface2); }
+.recipe-card .r-top {
+  display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px;
+}
+.recipe-card .r-emoji { font-size:2.6rem; line-height:1; }
+.recipe-card .r-tags  { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+.tag {
+  font-size:0.65rem; font-weight:700; letter-spacing:0.1em;
+  text-transform:uppercase; padding:3px 9px; border-radius:100px;
+}
+.tag.lunch  { background:rgba(232,160,48,0.15); color:var(--tag-lunch); }
+.tag.dinner { background:rgba(232,85,58,0.15);  color:var(--tag-dinner); }
+.tag.snack  { background:rgba(76,175,120,0.15); color:var(--tag-snack); }
+.tag.easy   { background:rgba(76,175,120,0.08); color:#4caf78; }
+.tag.medium { background:rgba(232,160,48,0.08); color:#e8a030; }
+.tag.hard   { background:rgba(232,85,58,0.08);  color:#e8553a; }
+.recipe-card h4 {
+  font-family:'Libre Baskerville',serif; font-size:1.18rem; font-weight:700;
+  margin-bottom:8px; line-height:1.25;
+}
+.recipe-card .r-desc {
+  font-size:0.82rem; color:var(--muted); line-height:1.65; margin-bottom:18px; flex:1;
+}
+.recipe-card .r-meta {
+  display:flex; gap:16px; font-size:0.75rem;
+  margin-bottom:16px; padding-top:14px; border-top:1px solid var(--border);
+}
+.recipe-card .r-meta span { display:flex; align-items:center; gap:4px; color:var(--muted); }
+.add-btn {
+  width:100%; padding:10px; border-radius:8px; border:1px dashed var(--border);
+  background:transparent; color:var(--muted); font-family:'Outfit',sans-serif;
+  font-size:0.78rem; cursor:pointer; transition:all 0.2s; letter-spacing:0.03em;
+}
+.add-btn:hover { border-color:rgba(255,255,255,0.3); color:var(--text); }
+.add-btn.added { border-style:solid; border-color:var(--tag-snack); color:var(--tag-snack); background:rgba(76,175,120,0.07); }
+
+/* ADD RECIPE CARD */
+.add-recipe-card {
+  background:var(--surface); padding:28px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:12px; min-height:220px; border:none;
+  transition:background 0.2s;
+  position:relative;
+}
+.add-recipe-card:hover { background:var(--surface2); }
+.add-recipe-card .arc-icon {
+  width:52px; height:52px; border-radius:50%;
+  border:1.5px dashed rgba(255,255,255,0.18);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.5rem; color:var(--muted);
+  transition:all 0.25s;
+}
+.add-recipe-card:hover .arc-icon {
+  border-color:var(--italian); color:var(--italian);
+  background:rgba(232,85,58,0.08);
+}
+.add-recipe-card .arc-label {
+  font-size:0.82rem; font-weight:500; color:var(--muted); letter-spacing:0.04em;
+  transition:color 0.2s;
+}
+.add-recipe-card:hover .arc-label { color:var(--text); }
+.add-recipe-card .arc-sub {
+  font-size:0.72rem; color:var(--dim); text-align:center; line-height:1.5;
+}
+
+/* CUSTOM RECIPE FORM MODAL */
+.cr-overlay {
+  position:fixed; inset:0; z-index:6000;
+  background:rgba(0,0,0,0.8); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.28s ease;
+  padding:20px;
+}
+.cr-overlay.open { opacity:1; pointer-events:all; }
+
+.cr-modal {
+  background:var(--surface);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px;
+  width:620px; max-width:100%;
+  max-height:90vh; overflow-y:auto;
+  transform:translateY(28px) scale(0.97);
+  transition:transform 0.35s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 40px 100px rgba(0,0,0,0.7);
+}
+.cr-overlay.open .cr-modal { transform:translateY(0) scale(1); }
+
+/* Scrollbar */
+.cr-modal::-webkit-scrollbar { width:4px; }
+.cr-modal::-webkit-scrollbar-track { background:var(--surface); }
+.cr-modal::-webkit-scrollbar-thumb { background:var(--dim); border-radius:4px; }
+
+.cr-header {
+  padding:24px 28px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  position:sticky; top:0; background:var(--surface); z-index:2;
+}
+.cr-header h3 {
+  font-family:'Bebas Neue',sans-serif; font-size:1.6rem;
+  letter-spacing:0.06em; color:var(--text);
+}
+.cr-header .cr-cuisine-badge {
+  font-size:0.7rem; font-weight:700; letter-spacing:0.1em;
+  text-transform:uppercase; padding:4px 12px; border-radius:100px;
+  border:1px solid var(--border); color:var(--muted);
+}
+.cr-close {
+  width:32px; height:32px; border-radius:50%; border:1px solid var(--border);
+  background:transparent; color:var(--muted); cursor:pointer; font-size:1rem;
+  display:flex; align-items:center; justify-content:center; transition:all 0.18s;
+  flex-shrink:0;
+}
+.cr-close:hover { background:var(--surface2); color:var(--text); }
+
+.cr-body { padding:24px 28px 28px; }
+
+/* Form field groups */
+.cr-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.cr-row.full { grid-template-columns:1fr; }
+.cr-row.three { grid-template-columns:1fr 1fr 1fr; }
+
+.cr-field { display:flex; flex-direction:column; gap:6px; }
+.cr-field label {
+  font-size:0.68rem; font-weight:700; letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--muted);
+}
+.cr-field input, .cr-field textarea, .cr-field select {
+  background:var(--bg); border:1px solid var(--border);
+  border-radius:10px; padding:11px 14px;
+  font-family:'Outfit',sans-serif; font-size:0.88rem; color:var(--text);
+  transition:border-color 0.18s, background 0.18s;
+  outline:none; width:100%;
+}
+.cr-field input:focus, .cr-field textarea:focus, .cr-field select:focus {
+  border-color:rgba(255,255,255,0.28); background:rgba(255,255,255,0.03);
+}
+.cr-field input::placeholder, .cr-field textarea::placeholder { color:var(--dim); }
+.cr-field select { cursor:pointer; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7570' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 14px center;
+  padding-right:36px;
+}
+.cr-field select option { background:var(--surface2); }
+.cr-field textarea { resize:vertical; min-height:72px; line-height:1.55; }
+
+/* Emoji picker row */
+.emoji-row {
+  display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;
+}
+.emoji-opt {
+  width:38px; height:38px; border-radius:8px;
+  border:1px solid var(--border); background:var(--bg);
+  font-size:1.2rem; cursor:pointer; transition:all 0.15s;
+  display:flex; align-items:center; justify-content:center;
+}
+.emoji-opt:hover { border-color:rgba(255,255,255,0.25); background:var(--surface2); }
+.emoji-opt.selected { border-color:var(--italian); background:rgba(232,85,58,0.12); }
+.emoji-custom-input {
+  width:80px; padding:0 10px; border-radius:8px;
+  border:1px solid var(--border); background:var(--bg);
+  font-size:1.1rem; color:var(--text);
+  font-family:'Outfit',sans-serif; text-align:center;
+  outline:none; transition:border-color 0.18s;
+}
+.emoji-custom-input:focus { border-color:rgba(255,255,255,0.28); }
+
+/* Ingredient / step dynamic lists */
+.cr-section-head {
+  display:flex; align-items:center; justify-content:space-between;
+  margin:20px 0 10px;
+}
+.cr-section-head span {
+  font-size:0.68rem; font-weight:700; letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--muted);
+}
+.cr-add-row-btn {
+  font-family:'Outfit',sans-serif; font-size:0.75rem; font-weight:500;
+  padding:5px 12px; border-radius:100px;
+  border:1px solid var(--border); background:transparent;
+  color:var(--muted); cursor:pointer; transition:all 0.18s;
+}
+.cr-add-row-btn:hover { color:var(--text); border-color:rgba(255,255,255,0.25); }
+
+.ingr-list, .steps-list-form { display:flex; flex-direction:column; gap:8px; }
+
+.ingr-row {
+  display:grid; grid-template-columns:1fr 120px 28px; gap:8px; align-items:center;
+}
+.step-row {
+  display:grid; grid-template-columns:22px 1fr 28px; gap:8px; align-items:flex-start;
+}
+.step-row-num {
+  font-family:'Bebas Neue',sans-serif; font-size:1.1rem;
+  color:var(--muted); text-align:center; padding-top:10px;
+}
+.cr-remove-row {
+  width:28px; height:28px; border-radius:6px; border:1px solid var(--border);
+  background:transparent; color:var(--muted); cursor:pointer; font-size:0.85rem;
+  display:flex; align-items:center; justify-content:center; transition:all 0.15s;
+  flex-shrink:0; margin-top:2px;
+}
+.cr-remove-row:hover { border-color:#e8553a; color:#e8553a; background:rgba(232,85,58,0.08); }
+
+/* Form divider */
+.cr-divider {
+  border:none; border-top:1px solid var(--border); margin:20px 0;
+}
+
+/* Submit row */
+.cr-submit-row {
+  display:flex; gap:10px; margin-top:24px; padding-top:20px;
+  border-top:1px solid var(--border);
+}
+.cr-submit {
+  flex:1; padding:14px; border-radius:12px;
+  border:none; background:var(--italian); color:#fff;
+  font-family:'Outfit',sans-serif; font-size:0.9rem; font-weight:700;
+  cursor:pointer; transition:background 0.2s; letter-spacing:0.04em;
+}
+.cr-submit:hover { background:#d44830; }
+.cr-cancel-btn {
+  padding:14px 22px; border-radius:12px;
+  border:1px solid var(--border); background:transparent;
+  color:var(--muted); font-family:'Outfit',sans-serif;
+  font-size:0.9rem; cursor:pointer; transition:all 0.18s;
+}
+.cr-cancel-btn:hover { background:var(--surface2); color:var(--text); }
+
+/* Custom recipe card badge */
+.custom-badge {
+  position:absolute; top:12px; left:12px;
+  font-size:0.6rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;
+  padding:3px 8px; border-radius:100px;
+  background:rgba(232,85,58,0.15); color:var(--italian); border:1px solid rgba(232,85,58,0.25);
+}
+
+/* DETAIL */
+.detail-inner { max-width:860px; margin:0 auto; padding:0 40px 80px; }
+.back-btn {
+  display:inline-flex; align-items:center; gap:7px; font-family:'Outfit',sans-serif;
+  font-size:0.82rem; color:var(--muted); background:none; border:none;
+  cursor:pointer; margin:28px 0; transition:color 0.2s;
+}
+.back-btn:hover { color:var(--text); }
+.detail-title-row { display:flex; gap:24px; align-items:flex-start; margin-bottom:10px; }
+.detail-title-row h2 {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(2.8rem,5vw,4.5rem); letter-spacing:0.04em; line-height:0.95; flex:1;
+}
+.detail-emoji { font-size:5.5rem; line-height:1; flex-shrink:0; }
+.detail-desc { color:var(--muted); font-size:0.98rem; line-height:1.75; margin-bottom:28px; }
+.detail-stats {
+  display:flex; border:1px solid var(--border); border-radius:12px;
+  overflow:hidden; margin-bottom:40px;
+}
+.detail-stats .stat {
+  flex:1; padding:18px 16px; border-right:1px solid var(--border); text-align:center;
+}
+.detail-stats .stat:last-child { border-right:none; }
+.stat .sv {
+  font-family:'Bebas Neue',sans-serif; font-size:1.9rem; letter-spacing:0.06em;
+  color:var(--italian); display:block;
+}
+.stat .sl {
+  font-size:0.67rem; text-transform:uppercase; letter-spacing:0.12em;
+  color:var(--muted); margin-top:2px;
+}
+.detail-grid { display:grid; grid-template-columns:1fr 1.2fr; gap:40px; }
+.detail-section > h3 {
+  font-size:0.67rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:18px; padding-bottom:10px; border-bottom:1px solid var(--border);
+}
+.ingredient-list { list-style:none; }
+.ingredient-list li {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 0; border-bottom:1px solid var(--border); font-size:0.88rem;
+}
+.ingredient-list li:last-child { border-bottom:none; }
+.ingredient-list .qty { font-weight:600; font-size:0.82rem; color:var(--italian); flex-shrink:0; margin-left:12px; }
+.steps-list { list-style:none; }
+.steps-list li { display:flex; gap:14px; margin-bottom:20px; }
+.step-num {
+  width:26px; height:26px; border-radius:50%; border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.72rem; font-weight:700; color:var(--muted); flex-shrink:0; margin-top:1px;
+}
+.step-text { font-size:0.87rem; color:rgba(240,237,230,0.8); line-height:1.7; }
+.detail-add-btn {
+  width:100%; margin-top:36px; padding:16px; border-radius:12px;
+  border:1px solid var(--border); background:var(--surface); color:var(--text);
+  font-family:'Outfit',sans-serif; font-size:0.9rem; font-weight:500;
+  cursor:pointer; transition:all 0.25s; letter-spacing:0.04em;
+}
+.detail-add-btn:hover { background:var(--surface2); border-color:rgba(255,255,255,0.2); }
+.detail-add-btn.added { background:rgba(76,175,120,0.1); border-color:var(--tag-snack); color:var(--tag-snack); }
+
+/* PLANNER */
+.planner-inner { padding:0 40px 80px; max-width:1400px; margin:0 auto; }
+.planner-header {
+  padding:40px 0 28px;
+  display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:16px;
+}
+.planner-header h2 {
+  font-family:'Bebas Neue',sans-serif; font-size:clamp(2.5rem,5vw,4rem); letter-spacing:0.05em;
+}
+.planner-header p { color:var(--muted); font-size:0.82rem; margin-top:4px; }
+.week-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:10px; margin-bottom:28px; }
+.day-col { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.day-head {
+  padding:10px 12px; background:var(--surface2);
+  font-size:0.7rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--muted); text-align:center; border-bottom:1px solid var(--border);
+}
+.day-body { padding:10px; min-height:180px; }
+.meal-chip {
+  border-radius:8px; padding:8px 10px; margin-bottom:8px; font-size:0.73rem;
+  line-height:1.4; position:relative; border:1px solid transparent;
+}
+.meal-chip.lunch  { background:rgba(232,160,48,0.1); border-color:rgba(232,160,48,0.2); }
+.meal-chip.dinner { background:rgba(232,85,58,0.1);  border-color:rgba(232,85,58,0.2); }
+.meal-chip.snack  { background:rgba(76,175,120,0.1); border-color:rgba(76,175,120,0.2); }
+.chip-type { font-size:0.58rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:3px; }
+.meal-chip.lunch  .chip-type { color:var(--tag-lunch); }
+.meal-chip.dinner .chip-type { color:var(--tag-dinner); }
+.meal-chip.snack  .chip-type { color:var(--tag-snack); }
+.chip-name { color:var(--text); }
+.remove-chip {
+  position:absolute; top:5px; right:6px; background:none; border:none;
+  cursor:pointer; color:var(--muted); font-size:0.65rem; opacity:0; transition:opacity 0.15s;
+}
+.meal-chip:hover .remove-chip { opacity:1; }
+.day-empty {
+  margin-top:8px; padding:16px 10px; border:1px dashed var(--border);
+  border-radius:8px; text-align:center; font-size:0.7rem; color:var(--dim);
+}
+.planner-footer {
+  display:flex; gap:0; flex-wrap:wrap; align-items:stretch;
+  background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden;
+}
+.footer-stat {
+  text-align:center; padding:24px 28px; border-right:1px solid var(--border); flex-shrink:0;
+}
+.footer-stat .fv {
+  font-family:'Bebas Neue',sans-serif; font-size:2.2rem; color:var(--text); letter-spacing:0.06em;
+}
+.footer-stat .fl { font-size:0.66rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-top:2px; }
+.footer-actions {
+  margin-left:auto; display:flex; gap:10px; align-items:center; padding:0 24px;
+}
+
+/* MODAL OVERLAY */
+.modal-overlay {
+  position:fixed; inset:0; z-index:5000;
+  background:rgba(0,0,0,0.7); backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.25s ease;
+}
+.modal-overlay.open { opacity:1; pointer-events:all; }
+
+.modal {
+  background:var(--surface); border:1px solid rgba(255,255,255,0.12);
+  border-radius:20px; width:380px; max-width:92vw;
+  padding:28px 28px 24px;
+  transform:translateY(24px) scale(0.97);
+  transition:transform 0.3s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 32px 80px rgba(0,0,0,0.6);
+}
+.modal-overlay.open .modal { transform:translateY(0) scale(1); }
+
+.modal-recipe-row {
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:20px; padding-bottom:18px;
+  border-bottom:1px solid var(--border);
+}
+.modal-recipe-emoji { font-size:2.4rem; line-height:1; flex-shrink:0; }
+.modal-recipe-name {
+  font-family:'Libre Baskerville',serif;
+  font-size:1.05rem; font-weight:700; line-height:1.2;
+}
+.modal-recipe-type {
+  font-size:0.68rem; font-weight:700; letter-spacing:0.1em;
+  text-transform:uppercase; margin-top:4px;
+}
+.modal-recipe-type.dinner { color:var(--tag-dinner); }
+.modal-recipe-type.lunch  { color:var(--tag-lunch); }
+.modal-recipe-type.snack  { color:var(--tag-snack); }
+
+.modal-label {
+  font-size:0.7rem; font-weight:700; letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--muted); margin-bottom:12px;
+}
+
+.day-picker {
+  display:grid; grid-template-columns:repeat(7,1fr); gap:6px;
+  margin-bottom:20px;
+}
+.day-pill {
+  border:1px solid var(--border); border-radius:10px;
+  background:transparent; color:var(--muted);
+  font-family:'Outfit',sans-serif; font-size:0.72rem; font-weight:600;
+  padding:10px 4px; cursor:pointer; text-align:center;
+  transition:all 0.18s; position:relative;
+}
+.day-pill:hover { border-color:rgba(255,255,255,0.25); color:var(--text); background:var(--surface2); }
+.day-pill.selected { background:var(--italian); border-color:var(--italian); color:#fff; }
+.day-pill.has-type::after {
+  content:''; position:absolute; bottom:5px; left:50%; transform:translateX(-50%);
+  width:4px; height:4px; border-radius:50%; background:var(--muted); opacity:0.6;
+}
+.day-pill.selected.has-type::after { background:rgba(255,255,255,0.6); }
+
+.modal-actions { display:flex; gap:8px; }
+.modal-cancel {
+  flex:1; padding:12px; border-radius:10px;
+  border:1px solid var(--border); background:transparent;
+  color:var(--muted); font-family:'Outfit',sans-serif;
+  font-size:0.85rem; cursor:pointer; transition:all 0.18s;
+}
+.modal-cancel:hover { background:var(--surface2); color:var(--text); }
+.modal-confirm {
+  flex:2; padding:12px; border-radius:10px;
+  border:none; background:var(--italian); color:#fff;
+  font-family:'Outfit',sans-serif; font-size:0.85rem; font-weight:600;
+  cursor:pointer; transition:background 0.18s;
+}
+.modal-confirm:hover { background:#d44830; }
+.modal-confirm:disabled { background:var(--dim); color:var(--muted); cursor:default; }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:30px; left:50%;
+  transform:translateX(-50%) translateY(60px);
+  background:var(--text); color:var(--bg);
+  padding:12px 22px; border-radius:100px;
+  font-size:0.83rem; font-weight:600; opacity:0; z-index:9998;
+  transition:all 0.38s cubic-bezier(.16,1,.3,1);
+  white-space:nowrap; box-shadow:0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* DELETE CONFIRMATION MODAL */
+.del-overlay {
+  position:fixed; inset:0; z-index:7000;
+  background:rgba(0,0,0,0.75); backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.22s ease; padding:20px;
+}
+.del-overlay.open { opacity:1; pointer-events:all; }
+.del-modal {
+  background:var(--surface); border:1px solid rgba(232,85,58,0.25);
+  border-radius:18px; width:400px; max-width:100%;
+  padding:32px 28px 24px;
+  transform:translateY(20px) scale(0.97);
+  transition:transform 0.28s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 32px 80px rgba(0,0,0,0.65); text-align:center;
+}
+.del-overlay.open .del-modal { transform:translateY(0) scale(1); }
+.del-icon {
+  width:56px; height:56px; border-radius:50%;
+  background:rgba(232,85,58,0.1); border:1px solid rgba(232,85,58,0.22);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; margin:0 auto 18px;
+}
+.del-modal h4 {
+  font-family:'Bebas Neue',sans-serif; font-size:1.6rem;
+  letter-spacing:0.06em; color:var(--text); margin-bottom:6px;
+}
+.del-recipe-preview {
+  display:flex; align-items:center; gap:10px; justify-content:center;
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:10px; padding:12px 16px; margin:14px 0 16px;
+}
+.del-recipe-preview .drp-emoji { font-size:1.8rem; line-height:1; }
+.del-recipe-preview .drp-info { text-align:left; }
+.del-recipe-preview .drp-name {
+  font-family:'Libre Baskerville',serif; font-size:0.95rem;
+  font-weight:700; color:var(--text); margin-bottom:2px;
+}
+.del-recipe-preview .drp-meta {
+  font-size:0.72rem; color:var(--muted); display:flex; gap:8px;
+}
+.del-modal .del-warning {
+  font-size:0.82rem; color:var(--muted); line-height:1.6; margin-bottom:22px;
+}
+.del-modal .del-warning strong { color:#e8553a; }
+.del-actions { display:flex; gap:10px; }
+.del-cancel {
+  flex:1; padding:12px; border-radius:10px;
+  border:1px solid var(--border); background:transparent;
+  color:var(--muted); font-family:'Outfit',sans-serif;
+  font-size:0.85rem; cursor:pointer; transition:all 0.18s;
+}
+.del-cancel:hover { background:var(--surface2); color:var(--text); }
+.del-confirm {
+  flex:1.4; padding:12px; border-radius:10px;
+  border:none; background:#e8553a; color:#fff;
+  font-family:'Outfit',sans-serif; font-size:0.85rem; font-weight:700;
+  cursor:pointer; transition:background 0.18s; letter-spacing:0.03em;
+}
+.del-confirm:hover { background:#c8401e; }
+
+/* Delete button on recipe cards — appears on hover */
+.card-del-btn {
+  position:absolute; top:10px; right:10px;
+  width:28px; height:28px; border-radius:7px;
+  border:1px solid var(--border); background:var(--bg);
+  color:var(--muted); font-size:0.8rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:all 0.18s; z-index:3; flex-shrink:0;
+}
+.recipe-card:hover .card-del-btn { opacity:1; }
+.card-del-btn:hover { background:rgba(232,85,58,0.14); border-color:rgba(232,85,58,0.4); color:#e8553a; }
+
+/* Delete button on detail page */
+.detail-delete-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:9px 18px; border-radius:100px;
+  border:1px solid rgba(232,85,58,0.28); background:transparent;
+  color:#e8553a; font-family:'Outfit',sans-serif;
+  font-size:0.8rem; font-weight:500; cursor:pointer;
+  transition:all 0.2s; letter-spacing:0.03em; margin-top:12px;
+}
+.detail-delete-btn:hover { background:rgba(232,85,58,0.1); border-color:#e8553a; }
+
+/* SYNC MODAL */
+.sync-overlay {
+  position:fixed; inset:0; z-index:6500;
+  background:rgba(0,0,0,0.78); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.25s ease; padding:20px;
+}
+.sync-overlay.open { opacity:1; pointer-events:all; }
+.sync-modal {
+  background:var(--surface); border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px; width:560px; max-width:100%; max-height:90vh;
+  overflow-y:auto;
+  transform:translateY(24px) scale(0.97);
+  transition:transform 0.32s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 40px 100px rgba(0,0,0,0.65);
+}
+.sync-overlay.open .sync-modal { transform:translateY(0) scale(1); }
+.sync-modal::-webkit-scrollbar { width:4px; }
+.sync-modal::-webkit-scrollbar-thumb { background:var(--dim); border-radius:4px; }
+
+.sync-header {
+  display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+  padding:24px 28px 20px; border-bottom:1px solid var(--border);
+  position:sticky; top:0; background:var(--surface); z-index:2;
+}
+.sync-header h3 {
+  font-family:'Bebas Neue',sans-serif; font-size:1.55rem;
+  letter-spacing:0.06em; color:var(--text); margin-bottom:2px;
+}
+.sync-header p { font-size:0.78rem; color:var(--muted); }
+
+.sync-body { padding:24px 28px 28px; display:flex; flex-direction:column; gap:0; }
+
+.sync-section {
+  display:flex; gap:18px; align-items:flex-start;
+}
+.sync-section-icon {
+  width:42px; height:42px; border-radius:50%;
+  background:var(--surface2); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.1rem; flex-shrink:0; margin-top:2px;
+}
+.sync-section-content { flex:1; }
+.sync-section-title {
+  font-family:'Bebas Neue',sans-serif; font-size:1.1rem;
+  letter-spacing:0.06em; color:var(--text); margin-bottom:6px;
+}
+.sync-section-desc {
+  font-size:0.8rem; color:var(--muted); line-height:1.65; margin-bottom:14px;
+}
+.sync-section-desc strong { color:var(--text); }
+.sync-section-desc code {
+  background:var(--surface2); padding:1px 5px; border-radius:4px;
+  font-size:0.78rem; color:var(--italian);
+}
+
+.sync-meta {
+  font-size:0.75rem; color:var(--muted); margin-bottom:12px;
+  display:flex; gap:14px; flex-wrap:wrap;
+}
+.sync-meta span {
+  display:flex; align-items:center; gap:5px;
+}
+.sync-meta .meta-dot {
+  width:6px; height:6px; border-radius:50%; background:var(--italian); display:inline-block;
+}
+
+.sync-btn {
+  font-family:'Outfit',sans-serif; font-size:0.82rem; font-weight:600;
+  padding:10px 18px; border-radius:10px; cursor:pointer;
+  transition:all 0.18s; letter-spacing:0.03em; border:none;
+}
+.export-btn {
+  background:var(--surface2); color:var(--text);
+  border:1px solid var(--border);
+}
+.export-btn:hover { border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.06); }
+.import-btn {
+  background:var(--italian); color:#fff; margin-right:8px;
+}
+.import-btn:hover { background:#c8401e; }
+.cancel-import-btn {
+  background:transparent; color:var(--muted);
+  border:1px solid var(--border);
+}
+.cancel-import-btn:hover { color:var(--text); border-color:rgba(255,255,255,0.2); }
+
+.sync-divider {
+  display:flex; align-items:center; gap:12px;
+  margin:22px 0; color:var(--dim); font-size:0.75rem;
+  padding-left:60px;
+}
+.sync-divider::before, .sync-divider::after {
+  content:''; flex:1; height:1px; background:var(--border);
+}
+.sync-divider span { flex-shrink:0; }
+
+/* Drop zone */
+.drop-zone {
+  border:1.5px dashed var(--border); border-radius:12px;
+  padding:28px 20px; text-align:center; cursor:pointer;
+  transition:all 0.2s; margin-bottom:12px;
+  background:var(--bg);
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color:var(--italian); background:rgba(232,85,58,0.05);
+}
+.drop-icon { font-size:1.8rem; margin-bottom:8px; }
+.drop-label { font-size:0.8rem; color:var(--muted); margin-bottom:8px; }
+.drop-label code {
+  background:var(--surface2); padding:1px 5px; border-radius:4px;
+  font-size:0.78rem; color:var(--italian);
+}
+.drop-or { font-size:0.72rem; color:var(--dim); margin-bottom:10px; }
+.drop-choose {
+  display:inline-block; font-family:'Outfit',sans-serif;
+  font-size:0.78rem; font-weight:600; padding:7px 16px;
+  border-radius:8px; border:1px solid var(--border);
+  background:var(--surface2); color:var(--text); cursor:pointer;
+  transition:all 0.18s;
+}
+.drop-choose:hover { border-color:rgba(255,255,255,0.25); }
+
+/* Import preview */
+.import-preview {
+  background:rgba(76,175,120,0.07); border:1px solid rgba(76,175,120,0.22);
+  border-radius:12px; padding:16px; margin-bottom:4px;
+}
+.import-preview-header {
+  display:flex; align-items:flex-start; gap:12px; margin-bottom:14px;
+}
+.import-preview-icon { font-size:1.4rem; flex-shrink:0; margin-top:1px; }
+.import-preview-title {
+  font-family:'Libre Baskerville',serif; font-size:0.9rem;
+  font-weight:700; color:var(--text); margin-bottom:3px;
+}
+.import-preview-sub { font-size:0.75rem; color:var(--muted); line-height:1.5; }
+
+/* MOBILE */
+@media(max-width:900px){
+  nav { padding:0 20px; }
+  .home-hero { padding:48px 20px 36px; }
+  .cuisine-strip { grid-template-columns:1fr 1fr; }
+  .cuisine-section-label,.no-seafood-tag { margin-left:20px; margin-right:20px; }
+  .cuisine-header,.meal-filter { padding-left:20px; padding-right:20px; }
+  .recipe-grid { margin:20px 20px 40px; }
+  .detail-inner,.planner-inner { padding-left:20px; padding-right:20px; }
+  .detail-grid { grid-template-columns:1fr; }
+  .week-grid { grid-template-columns:repeat(2,1fr); }
+  .breadcrumb { padding-left:20px; padding-right:20px; }
+  .home-footer { margin-left:20px; margin-right:20px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo" onclick="goHome()">PL<em>A</em>TO</div>
+  <div class="nav-right">
+    <button class="pill-btn" onclick="openSyncModal()" title="Export / Import data">⇅ Sync</button>
+    <button class="pill-btn" onclick="showScreen('planner')">
+      📅 My Week <span class="plan-badge" id="planBadge">0</span>
+    </button>
+    <button class="pill-btn accent" onclick="goHome()">Browse Cuisines</button>
+  </div>
+</nav>
+
+<div class="breadcrumb" id="breadcrumb">
+  <span class="active">Home</span>
+</div>
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="home-hero">
+    <div class="hero-eyebrow">Weekly Meal Planner</div>
+    <h1>PLAN YOUR<br><span class="accent">WEEK.</span></h1>
+    <p>Pick a cuisine, explore lunch, dinner and snack recipes — then build your perfect seven-day meal plan one dish at a time.</p>
+  </div>
+  <div class="cuisine-section-label">Select a Cuisine to Explore</div>
+  <div class="cuisine-strip" id="cuisineStrip"></div>
+  <div class="home-footer"><div class="home-footer-icon"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAD20lEQVR4nO2dz2oUQRDGazabdT24ipcECQtR0ECisghG8Oqz5AFEBb2LInkCDz6Az+BJVJKorK4Gc4lC8KomE8TNRnY9aJZx/nb3dHX1JN/vuDPT0/N9VdU9Mz1sQBZotVojG+1UkTAMgzLHGx98lEXPwsQM7QMgfDE6RijvCOH1UTGiptIQxDdDRbdchyC8HfIyIXMDxLdPmhGpJQji85Cmq9IYAPhIGIDo5yWuby1vI+AhqjNKkDBjAxD9bjnQGxkgTECE6JcEGSAMDBCmhvIjCzJAGBggDAwQBgYIAwOEgQHCwABhYIAwMEAYGCAMDBAGBggDA4SBAcLUpTugytaXDa3927NzTD2xS+Dr+wBdwYvw1RCvDLAtehY+meGFASrCX+pc02qz110p3McHI0QNyBNeV/Ai8gyRNELMgDTxVURfW5zJ3X519WthG2lmSJng3AAu4eNUxQinBpiIryt8nCIjpE1wZkBcfI6oz8IkG1yZ4OROWFJ81bbifXI1JWY3QFp8nTYlTHD6LEhKfJ22bU9/i2AdA6IRVEb80w+f0OTZC5nHjfq/aLj9jfY3N6j/6hntvXlBNMq+LN0xgXM8qMzDuDyC5nGamJ6hiekZal6/QYP1Lu0s36Xhz13prhXCVoJsRb8JjfkOnbz1oNS5on3mHAvqHI1zT+EG71fpx/2bREQUHGvS5PmL1Fq6QxNTZ8b7NOY71Fi4QoOPb1n7UhaWDHA1hSMiGu31afDhNYWPHyW2NeY71s7DdU3ssyBX5ef31mbit9qJU6XO6WJGdGheSdbb5xK/DXe33XdEk8rPgv6OAQvUWrqd2DZY7wr0SI9KGtC4vEhTT1/m7jP49M77AZjoEJWgKPsbPdpZvifdDSUqmQFxRnt9Gm5/p/3P/+6E157n3gn7BLsBve6K9dlE9D6AE5X3ymXxogSpPJuRPifXzSWLAT6sNqgKdS6x2rNz47tHjjLEjaunoV6UICK3ZUii5GXBakA0clwMaLZwFf1EjjOgyAQXkWmySoITJ6sidN8Lc72W1BXfxWTCSQbEL0QiE3wUn8jzhVku1gVJL8xyOgakXVheNtjIBJ/FJ6rQ4lyba0N9EP6Ayi1PN10djeXpOeADDU/AJ0oegY/0PAOfqQIWvHkaelSBAcLAAGFggDAwQBgYIAwMEKZW9v9wQTmQAcLAAGFqROX/lhuYEYZhgAwQZmwAssAtB3ojA4T5zwBkgRuiOicyACbwEtc3tQTBBB6U/9Ic2CcrqDMNQBbYI09LJZHx3ticokBWKkHIBjNUdNMWFtlQjE7AGkc2jEhiUin+ADSwoMuPhOpsAAAAAElFTkSuQmCC" alt="PLATO"></div><div class="home-footer-text"><div class="home-footer-name">PLATO</div><div class="home-footer-version">Version 1.2</div></div></div>
+</div>
+
+<!-- RECIPES -->
+<div class="screen" id="screen-recipes">
+  <div class="recipe-screen-inner">
+    <div class="cuisine-header" id="cuisineHeader"></div>
+    <div class="meal-filter" id="mealFilter"></div>
+    <div class="recipe-grid" id="recipeGrid"></div>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div class="screen" id="screen-detail">
+  <div class="detail-inner">
+    <button class="back-btn" id="detailBackBtn">← Back to recipes</button>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- PLANNER -->
+<div class="screen" id="screen-planner">
+  <div class="planner-inner">
+    <div class="planner-header">
+      <div>
+        <h2>MY WEEK</h2>
+        <p>Hover a meal chip to remove it · Click recipes to add more</p>
+      </div>
+      <button class="pill-btn accent" onclick="goHome()">+ Add Recipes</button>
+    </div>
+    <div class="week-grid" id="weekGrid"></div>
+    <div class="planner-footer" id="plannerFooter"></div>
+  </div>
+</div>
+
+<!-- DAY PICKER MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-recipe-row">
+      <div class="modal-recipe-emoji" id="modalEmoji"></div>
+      <div>
+        <div class="modal-recipe-name" id="modalName"></div>
+        <div class="modal-recipe-type" id="modalType"></div>
+      </div>
+    </div>
+    <div class="modal-label">Choose a day</div>
+    <div class="day-picker" id="dayPicker"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModalDirect()">Cancel</button>
+      <button class="modal-confirm" id="modalConfirm" onclick="confirmDay()" disabled>Add to Plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOM RECIPE FORM MODAL -->
+<div class="cr-overlay" id="crOverlay" onclick="closeCRModal(event)">
+  <div class="cr-modal" id="crModal">
+    <div class="cr-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <h3>ADD RECIPE</h3>
+        <span class="cr-cuisine-badge" id="crCuisineBadge"></span>
+      </div>
+      <button class="cr-close" onclick="closeCRModalDirect()">✕</button>
+    </div>
+    <div class="cr-body">
+
+      <!-- Emoji picker -->
+      <div class="cr-field" style="margin-bottom:16px;">
+        <label>Pick an Emoji</label>
+        <div class="emoji-row" id="emojiRow">
+          <button type="button" class="emoji-opt selected" data-emoji="🍽" onclick="selectEmoji(this)">🍽</button>
+          <button type="button" class="emoji-opt" data-emoji="🥘" onclick="selectEmoji(this)">🥘</button>
+          <button type="button" class="emoji-opt" data-emoji="🍝" onclick="selectEmoji(this)">🍝</button>
+          <button type="button" class="emoji-opt" data-emoji="🍜" onclick="selectEmoji(this)">🍜</button>
+          <button type="button" class="emoji-opt" data-emoji="🍛" onclick="selectEmoji(this)">🍛</button>
+          <button type="button" class="emoji-opt" data-emoji="🌮" onclick="selectEmoji(this)">🌮</button>
+          <button type="button" class="emoji-opt" data-emoji="🫔" onclick="selectEmoji(this)">🫔</button>
+          <button type="button" class="emoji-opt" data-emoji="🍔" onclick="selectEmoji(this)">🍔</button>
+          <button type="button" class="emoji-opt" data-emoji="🥩" onclick="selectEmoji(this)">🥩</button>
+          <button type="button" class="emoji-opt" data-emoji="🍗" onclick="selectEmoji(this)">🍗</button>
+          <button type="button" class="emoji-opt" data-emoji="🥗" onclick="selectEmoji(this)">🥗</button>
+          <button type="button" class="emoji-opt" data-emoji="🧀" onclick="selectEmoji(this)">🧀</button>
+          <button type="button" class="emoji-opt" data-emoji="🥚" onclick="selectEmoji(this)">🥚</button>
+          <button type="button" class="emoji-opt" data-emoji="🫕" onclick="selectEmoji(this)">🫕</button>
+          <button type="button" class="emoji-opt" data-emoji="🥐" onclick="selectEmoji(this)">🥐</button>
+          <button type="button" class="emoji-opt" data-emoji="🍕" onclick="selectEmoji(this)">🍕</button>
+          <button type="button" class="emoji-opt" data-emoji="🌶️" onclick="selectEmoji(this)">🌶️</button>
+          <button type="button" class="emoji-opt" data-emoji="🥑" onclick="selectEmoji(this)">🥑</button>
+          <button type="button" class="emoji-opt" data-emoji="🍋" onclick="selectEmoji(this)">🍋</button>
+          <button type="button" class="emoji-opt" data-emoji="🧆" onclick="selectEmoji(this)">🧆</button>
+          <input class="emoji-custom-input" id="emojiCustom" maxlength="2" placeholder="✏️" title="Type your own emoji" oninput="setCustomEmoji(this.value)" />
+        </div>
+      </div>
+
+      <!-- Name + type row -->
+      <div class="cr-row">
+        <div class="cr-field">
+          <label>Recipe Name *</label>
+          <input type="text" id="crName" placeholder="e.g. Grandma's Lasagne" maxlength="60" />
+        </div>
+        <div class="cr-field">
+          <label>Meal Type *</label>
+          <select id="crType">
+            <option value="">— Select —</option>
+            <option value="lunch">☀️ Lunch</option>
+            <option value="dinner">🌙 Dinner</option>
+            <option value="snack">🍿 Snack</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="cr-row full">
+        <div class="cr-field">
+          <label>Short Description *</label>
+          <textarea id="crDesc" rows="2" placeholder="A one-line tease of why this dish is worth making..."></textarea>
+        </div>
+      </div>
+
+      <!-- Meta: time, cal, servings, difficulty -->
+      <div class="cr-row three" style="grid-template-columns:1fr 1fr 1fr 1fr; margin-bottom:0;">
+        <div class="cr-field">
+          <label>Cook Time</label>
+          <input type="text" id="crTime" placeholder="30 min" />
+        </div>
+        <div class="cr-field">
+          <label>Calories</label>
+          <input type="text" id="crCal" placeholder="520" />
+        </div>
+        <div class="cr-field">
+          <label>Servings</label>
+          <input type="text" id="crServings" placeholder="2" />
+        </div>
+        <div class="cr-field">
+          <label>Difficulty</label>
+          <select id="crDiff">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+      </div>
+
+      <hr class="cr-divider">
+
+      <!-- Ingredients -->
+      <div class="cr-section-head">
+        <span>Ingredients</span>
+        <button type="button" class="cr-add-row-btn" onclick="addIngredientRow()">+ Add ingredient</button>
+      </div>
+      <div class="ingr-list" id="ingrList"></div>
+
+      <hr class="cr-divider">
+
+      <!-- Steps -->
+      <div class="cr-section-head">
+        <span>Method Steps</span>
+        <button type="button" class="cr-add-row-btn" onclick="addStepRow()">+ Add step</button>
+      </div>
+      <div class="steps-list-form" id="stepsList"></div>
+
+      <!-- Submit -->
+      <div class="cr-submit-row">
+        <button type="button" class="cr-cancel-btn" onclick="closeCRModalDirect()">Cancel</button>
+        <button type="button" class="cr-submit" onclick="saveCustomRecipe()">Save Recipe →</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- SYNC MODAL (Export / Import) -->
+<div class="sync-overlay" id="syncOverlay" onclick="closeSyncModal(event)">
+  <div class="sync-modal" id="syncModal">
+
+    <div class="sync-header">
+      <div>
+        <h3>SYNC DATA</h3>
+        <p>Transfer your recipes and plan between devices</p>
+      </div>
+      <button class="cr-close" onclick="closeSyncOverlay()">✕</button>
+    </div>
+
+    <div class="sync-body">
+
+      <!-- EXPORT -->
+      <div class="sync-section">
+        <div class="sync-section-icon">⬆</div>
+        <div class="sync-section-content">
+          <div class="sync-section-title">Export</div>
+          <div class="sync-section-desc">Download a <code>.json</code> backup of all your custom recipes and weekly plan. Use this to move your data to another device.</div>
+          <div class="sync-meta" id="syncMeta"></div>
+          <button class="sync-btn export-btn" onclick="exportData()">⬇ Download Backup File</button>
+        </div>
+      </div>
+
+      <div class="sync-divider"><span>or</span></div>
+
+      <!-- IMPORT -->
+      <div class="sync-section">
+        <div class="sync-section-icon">⬇</div>
+        <div class="sync-section-content">
+          <div class="sync-section-title">Import</div>
+          <div class="sync-section-desc">Load a PLATO backup file to restore your custom recipes and plan. This will <strong>merge</strong> with your current data — nothing gets deleted.</div>
+
+          <!-- Drop zone -->
+          <div class="drop-zone" id="dropZone"
+               ondragover="event.preventDefault(); this.classList.add('drag-over')"
+               ondragleave="this.classList.remove('drag-over')"
+               ondrop="handleDrop(event)">
+            <div class="drop-icon">📂</div>
+            <div class="drop-label">Drop your <code>plato-backup.json</code> here</div>
+            <div class="drop-or">or</div>
+            <label class="drop-choose">
+              Choose File
+              <input type="file" accept=".json,application/json" id="importFileInput" onchange="handleFileSelect(event)" style="display:none">
+            </label>
+          </div>
+
+          <!-- Import preview (hidden until file selected) -->
+          <div class="import-preview" id="importPreview" style="display:none">
+            <div class="import-preview-header">
+              <span class="import-preview-icon">✅</span>
+              <div>
+                <div class="import-preview-title" id="importPreviewTitle"></div>
+                <div class="import-preview-sub" id="importPreviewSub"></div>
+              </div>
+            </div>
+            <button class="sync-btn import-btn" id="importConfirmBtn" onclick="confirmImport()">Import Now →</button>
+            <button class="sync-btn cancel-import-btn" onclick="resetImportUI()">✕ Cancel</button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div class="del-overlay" id="delOverlay" onclick="closeDelModal(event)">
+  <div class="del-modal">
+    <div class="del-icon">🗑️</div>
+    <h4>DELETE RECIPE</h4>
+    <div class="del-recipe-preview" id="delPreview"></div>
+    <p class="del-warning">This will <strong>permanently remove</strong> this recipe from the planner. If it's in your weekly plan it will be removed there too.</p>
+    <div class="del-actions">
+      <button class="del-cancel" onclick="closeDelOverlay()">Keep it</button>
+      <button class="del-confirm" onclick="confirmDelete()">Yes, delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CUISINES = [
+  {
+    id:'italian', name:'ITALIAN', color:'var(--italian)',
+    emoji:'🍝', sub:'Pasta · Pizza · Risotto · Chicken · 💍 New',
+    desc:'Roman classics, Neapolitan pies and slow-braise northern Italian Sunday cooking — all seafood-free.',
+    recipes:[
+      { id:'it1', name:'Cacio e Pepe', emoji:'🍝', type:'dinner', diff:'medium', time:'25 min', cal:520, servings:2,
+        desc:'Rome\'s legendary pasta — just pecorino, cracked black pepper and starchy pasta water turned into pure silk.',
+        ingredients:[{n:'Spaghetti',q:'200g'},{n:'Pecorino Romano',q:'80g'},{n:'Black pepper',q:'2 tsp cracked'},{n:'Pasta water',q:'100ml'},{n:'Salt',q:'to taste'}],
+        steps:['Crack pepper coarsely and toast in a dry pan until fragrant.','Cook spaghetti in very well-salted water. Reserve 100ml starchy water before draining.','Off heat, toss pasta with pepper and a splash of pasta water.','Add finely grated pecorino in thirds, tossing vigorously and adding water to emulsify into a creamy sauce.','Serve immediately in warm bowls with extra pecorino and cracked pepper on top.']
+      },
+      { id:'it2', name:'Chicken Piccata', emoji:'🍋', type:'dinner', diff:'medium', time:'30 min', cal:490, servings:2,
+        desc:'Thin golden chicken cutlets finished in a bright lemon-butter-caper pan sauce — weeknight elegance.',
+        ingredients:[{n:'Chicken breast',q:'2 (butterflied)'},{n:'Plain flour',q:'3 tbsp'},{n:'Butter',q:'60g'},{n:'Lemon',q:'2'},{n:'Capers',q:'2 tbsp'},{n:'White wine',q:'80ml'},{n:'Parsley',q:'handful'}],
+        steps:['Butterfly and pound chicken to even thickness, season and dredge in flour.','Fry in olive oil and butter over high heat, 3 min each side. Remove and rest.','Deglaze pan with white wine, scraping up all the fond.','Add lemon juice, capers and remaining butter. Swirl pan to emulsify.','Return chicken 1 min to coat in sauce. Finish with fresh parsley.']
+      },
+      { id:'it3', name:'Mushroom Risotto', emoji:'🍄', type:'dinner', diff:'hard', time:'45 min', cal:560, servings:4,
+        desc:'Velvety Arborio with porcini and chestnut mushrooms finished with cold butter and aged parmesan — the Italian art of patience.',
+        ingredients:[{n:'Arborio rice',q:'300g'},{n:'Mixed mushrooms',q:'300g'},{n:'Parmesan',q:'70g'},{n:'Shallots',q:'3'},{n:'White wine',q:'100ml'},{n:'Butter',q:'50g'},{n:'Vegetable stock',q:'1.2L'}],
+        steps:['Keep stock warm in a separate pan throughout.','Sauté shallots in butter, add sliced mushrooms until golden.','Add rice, stir to toast 2 min, pour in wine until fully absorbed.','Add stock one ladle at a time, stirring constantly — about 18 min total.','Off heat, beat in cold butter and grated parmesan (mantecatura). Rest 2 min. Serve.']
+      },
+      { id:'it4', name:'Bruschetta Board', emoji:'🍅', type:'snack', diff:'easy', time:'10 min', cal:240, servings:4,
+        desc:'Grilled sourdough rubbed with garlic, piled with ripe seasoned tomatoes, torn basil and the finest olive oil you own.',
+        ingredients:[{n:'Sourdough',q:'6 thick slices'},{n:'Ripe tomatoes',q:'4'},{n:'Garlic',q:'2 cloves'},{n:'Basil',q:'big handful'},{n:'Extra virgin olive oil',q:'4 tbsp'},{n:'Sea salt flakes',q:'to taste'}],
+        steps:['Grill or char-toast bread on both sides until deeply golden.','While hot, rub each slice firmly with a cut garlic clove.','Dice tomatoes, season with salt and olive oil, let sit 5 min.','Spoon tomatoes generously over each slice.','Finish with torn basil, a final drizzle of good oil and sea salt flakes.']
+      },
+      { id:'it5', name:'Caprese Orzo Bowl', emoji:'🥗', type:'lunch', diff:'easy', time:'15 min', cal:420, servings:2,
+        desc:'Roasted cherry tomatoes, creamy burrata and al dente orzo tossed in herby pesto — a lunch worth sitting down for.',
+        ingredients:[{n:'Orzo pasta',q:'160g'},{n:'Cherry tomatoes',q:'200g'},{n:'Burrata',q:'125g'},{n:'Basil pesto',q:'3 tbsp'},{n:'Balsamic glaze',q:'1 tbsp'},{n:'Olive oil',q:'2 tbsp'}],
+        steps:['Halve tomatoes, toss in oil, roast at 200°C for 15 min until blistered.','Cook orzo in well-salted water, drain and toss warm with pesto.','Divide orzo into bowls, top with roasted tomatoes.','Place burrata in the centre, tear open at the table.','Drizzle balsamic glaze and olive oil. Season with sea salt flakes.']
+      },
+      { id:'it6', name:'Sausage & Fennel Pasta', emoji:'🌿', type:'lunch', diff:'easy', time:'25 min', cal:610, servings:2,
+        desc:'Crumbled Italian pork sausage, fennel and white wine sauce tossed with rigatoni — five-ingredient weeknight hero.',
+        ingredients:[{n:'Rigatoni',q:'200g'},{n:'Italian sausages',q:'3'},{n:'Fennel bulb',q:'1'},{n:'White wine',q:'80ml'},{n:'Crushed tomatoes',q:'200g'},{n:'Parmesan',q:'40g'},{n:'Chilli flakes',q:'pinch'}],
+        steps:['Squeeze sausage meat from casings, break into chunks and brown well.','Add thinly sliced fennel, cook until soft and slightly caramelised.','Deglaze with white wine, add crushed tomatoes and chilli flakes.','Simmer 10 min while pasta cooks. Reserve a cup of pasta water.','Toss drained rigatoni through sauce, loosen with pasta water. Finish with parmesan.']
+      },
+      { id:'it7', name:'Marry Me Chicken Pasta', emoji:'💍', type:'dinner', diff:'medium', time:'30 min', cal:680, servings:3,
+        desc:'Creamy sun-dried tomato and parmesan sauce with golden pan-seared chicken — so good it earned its name. Rich, restaurant-quality in under 30 minutes.',
+        ingredients:[{n:'Chicken breast or thighs',q:'500g'},{n:'Penne or rigatoni',q:'300g'},{n:'Sun-dried tomatoes (in oil)',q:'80g'},{n:'Garlic cloves, minced',q:'4'},{n:'Double / heavy cream',q:'200ml'},{n:'Chicken stock',q:'100ml'},{n:'Parmesan, finely grated',q:'60g'},{n:'Tomato paste',q:'1 tbsp'},{n:'Dried oregano',q:'1 tsp'},{n:'Chilli flakes',q:'½ tsp'},{n:'Fresh basil',q:'handful'},{n:'Olive oil',q:'2 tbsp'}],
+        steps:['Butterfly chicken to even thickness. Season with salt, pepper and a pinch of chilli. Sear in hot oil 4 min each side until golden. Remove and rest.','In the same pan, fry minced garlic 30 sec. Add tomato paste and chopped sun-dried tomatoes, stir 1 min.','Pour in chicken stock, scraping up any fond. Add cream and half the parmesan. Add oregano and chilli flakes.','Simmer sauce 3–4 min until slightly thickened. Cook pasta in heavily salted boiling water meanwhile. Reserve 100ml pasta water.','Return sliced chicken to pan. Toss in drained pasta with a splash of pasta water. Simmer together 2 min.','Serve in warm bowls topped with remaining parmesan, torn fresh basil and extra chilli flakes.']
+      }
+    ]
+  },
+  {
+    id:'asian', name:'ASIAN', color:'var(--asian)',
+    emoji:'🥢', sub:'Ramen · Stir-fry · Dumplings · Rice',
+    desc:'Umami-forward dishes from Japan, Korea and China — bold sauces, fresh aromatics, sizzling woks.',
+    recipes:[
+      { id:'as1', name:'Tonkotsu Ramen', emoji:'🍜', type:'dinner', diff:'hard', time:'3 hr', cal:720, servings:4,
+        desc:'Milky pork bone broth with wavy noodles, soy eggs and chashu pork — the ramen that demands a whole afternoon.',
+        ingredients:[{n:'Pork trotters',q:'1kg'},{n:'Ramen noodles',q:'400g'},{n:'Soy sauce',q:'4 tbsp'},{n:'Mirin',q:'3 tbsp'},{n:'Eggs',q:'4'},{n:'Spring onion',q:'4'},{n:'Nori',q:'4 sheets'}],
+        steps:['Blanch pork bones 5 min in boiling water, rinse thoroughly.','Simmer bones in fresh water 2.5–3 hr until broth turns milky white.','Season broth with soy, mirin and salt to taste.','Marinate peeled soft-boiled eggs in soy-mirin for at least 2 hr.','Cook noodles, divide into bowls, ladle boiling broth over. Top with halved egg, spring onion and nori.']
+      },
+      { id:'as2', name:'Chicken Pad Thai', emoji:'🥢', type:'dinner', diff:'medium', time:'25 min', cal:560, servings:2,
+        desc:'Wok-tossed rice noodles with chicken, egg, bean sprouts and that addictive sweet-tangy tamarind sauce.',
+        ingredients:[{n:'Flat rice noodles',q:'200g'},{n:'Chicken thigh',q:'200g sliced'},{n:'Eggs',q:'2'},{n:'Bean sprouts',q:'100g'},{n:'Tamarind paste',q:'3 tbsp'},{n:'Fish sauce',q:'2 tbsp'},{n:'Crushed peanuts',q:'40g'},{n:'Lime',q:'1'}],
+        steps:['Soak noodles in warm water 20 min. Mix tamarind, fish sauce, sugar into sauce.','Stir-fry chicken in screaming-hot wok until golden. Set aside.','Add noodles, toss 2 min, push to side. Scramble eggs in the gap.','Combine everything, pour sauce over, toss vigorously to coat.','Fold in bean sprouts. Serve topped with peanuts, lime wedge and chilli flakes.']
+      },
+      { id:'as3', name:'Chicken Katsu Curry', emoji:'🍛', type:'lunch', diff:'medium', time:'35 min', cal:680, servings:2,
+        desc:'Golden panko-crusted chicken with rich Japanese curry sauce poured over steamed jasmine rice.',
+        ingredients:[{n:'Chicken breast',q:'2'},{n:'Panko breadcrumbs',q:'100g'},{n:'Eggs',q:'2'},{n:'Plain flour',q:'4 tbsp'},{n:'Japanese curry roux',q:'2–3 blocks'},{n:'Jasmine rice',q:'for 2'},{n:'Onion',q:'1'},{n:'Carrot',q:'1'}],
+        steps:['Butterfly chicken to even thickness, season well.','Coat in flour → beaten egg → panko. Press firmly so crumbs adhere.','Fry in 170°C oil 3–4 min each side until deep golden. Drain on paper.','Sauté onion and carrot, add 500ml water, simmer 10 min, dissolve roux blocks to make sauce.','Slice rested chicken and serve over rice with curry sauce on the side.']
+      },
+      { id:'as4', name:'Pork & Cabbage Gyoza', emoji:'🥟', type:'snack', diff:'medium', time:'30 min', cal:360, servings:4,
+        desc:'Crispy-bottomed pan-fried dumplings packed with juicy pork and napa cabbage, served with soy-vinegar dipping sauce.',
+        ingredients:[{n:'Gyoza wrappers',q:'24'},{n:'Pork mince',q:'250g'},{n:'Napa cabbage',q:'150g'},{n:'Ginger',q:'1 tsp grated'},{n:'Sesame oil',q:'1 tbsp'},{n:'Soy sauce',q:'2 tbsp'},{n:'Rice vinegar',q:'1 tbsp'}],
+        steps:['Salt cabbage, rest 10 min, squeeze out all moisture with your hands.','Mix pork with cabbage, ginger, sesame oil, soy. Stir vigorously until sticky.','Place 1 tsp filling in wrapper, wet edge, fold and pleat firmly.','Fry flat-side down in a little oil, 2 min until golden.','Add a splash of water, cover immediately and steam 3 min. Uncover to re-crisp. Serve with dipping sauce.']
+      },
+      { id:'as5', name:'Korean Bibimbap', emoji:'🥘', type:'lunch', diff:'medium', time:'35 min', cal:520, servings:2,
+        desc:'Steamed rice topped with rainbow vegetables, a fried egg and spicy gochujang — mix vigorously at the table.',
+        ingredients:[{n:'Steamed rice',q:'300g'},{n:'Spinach',q:'100g'},{n:'Carrot',q:'1 julienned'},{n:'Zucchini',q:'1'},{n:'Bean sprouts',q:'80g'},{n:'Eggs',q:'2'},{n:'Gochujang',q:'2 tbsp'},{n:'Sesame oil',q:'1 tbsp'}],
+        steps:['Blanch spinach, squeeze dry, toss with sesame oil and minced garlic.','Quickly sauté julienned carrot and sliced zucchini separately with salt and sesame oil.','Blanch bean sprouts 1 min, season similarly.','Fry eggs sunny-side up so yolk stays runny.','Arrange rice in wide bowls, place vegetables in sections, egg on top. Gochujang on the side.']
+      },
+      { id:'as6', name:'Beef & Broccoli Stir-fry', emoji:'🥦', type:'dinner', diff:'easy', time:'20 min', cal:480, servings:2,
+        desc:'Tender sliced sirloin and crisp broccoli in a glossy oyster-soy-sesame sauce — better than takeaway.',
+        ingredients:[{n:'Beef sirloin',q:'250g thinly sliced'},{n:'Broccoli',q:'300g'},{n:'Oyster sauce',q:'3 tbsp'},{n:'Soy sauce',q:'2 tbsp'},{n:'Sesame oil',q:'1 tsp'},{n:'Garlic',q:'3 cloves'},{n:'Cornstarch',q:'1 tbsp'},{n:'Steamed rice',q:'to serve'}],
+        steps:['Marinate beef slices in soy sauce, cornstarch and sesame oil for 15 min.','Blanch broccoli florets 2 min in boiling water, drain.','Sear beef in a very hot wok until just browned. Remove.','Fry garlic 30 sec, add broccoli, return beef to wok.','Pour combined oyster sauce mixture over everything. Toss until glossy and serve over rice.']
+      }
+    ]
+  },
+  {
+    id:'mexican', name:'MEXICAN', color:'var(--mexican)',
+    emoji:'🌮', sub:'Tacos · Burritos · Quesadillas · Dips',
+    desc:'Bold chillies, slow-braised meats, vibrant fresh salsas and tortillas — generous, fiery and deeply satisfying.',
+    recipes:[
+      { id:'mx1', name:'Birria Beef Tacos', emoji:'🌮', type:'dinner', diff:'hard', time:'3 hr', cal:760, servings:4,
+        desc:'Slow-braised beef in rich dried-chilli consommé, fried into crispy tortillas and dunked in the broth.',
+        ingredients:[{n:'Beef chuck',q:'1kg'},{n:'Guajillo chillies',q:'5'},{n:'Ancho chillies',q:'2'},{n:'Corn tortillas',q:'12'},{n:'White onion',q:'1'},{n:'Cilantro',q:'bunch'},{n:'Lime',q:'2'},{n:'Cumin',q:'1 tsp'}],
+        steps:['Toast and soak dried chillies in boiling water 20 min until pliable.','Blend chillies with garlic, cumin, oregano and soaking liquid until completely smooth.','Braise beef in chilli sauce plus water on very low heat for 2.5 hr. Shred and season.','Dip tortillas in the fat floating on top of the broth, then fry in a dry pan until crispy.','Fill with beef, fold, press and fry again. Top with diced onion, cilantro. Serve consommé alongside for dunking.']
+      },
+      { id:'mx2', name:'Chicken Quesadillas', emoji:'🫔', type:'lunch', diff:'easy', time:'20 min', cal:540, servings:2,
+        desc:'Crispy flour tortillas stuffed with spiced chicken, peppers, onion and melted Monterey Jack cheese.',
+        ingredients:[{n:'Large flour tortillas',q:'4'},{n:'Chicken breast',q:'300g'},{n:'Monterey Jack',q:'150g'},{n:'Bell peppers',q:'2'},{n:'Onion',q:'1'},{n:'Taco seasoning',q:'1 tbsp'},{n:'Sour cream',q:'to serve'}],
+        steps:['Cook chicken with taco seasoning until cooked through, then shred or dice.','Sauté peppers and onion until soft and slightly caramelised. Season.','Lay tortilla flat, cover one half with grated cheese, chicken and pepper mix.','Fold over, cook in dry pan 2–3 min each side until golden and completely crispy.','Slice into wedges. Serve with sour cream, guacamole and fresh salsa.']
+      },
+      { id:'mx3', name:'Carnitas Burrito Bowl', emoji:'🥗', type:'lunch', diff:'medium', time:'2 hr', cal:680, servings:4,
+        desc:'Slow-cooked crispy pork carnitas over cilantro-lime rice with black beans, pico and jalapeño crema.',
+        ingredients:[{n:'Pork shoulder',q:'800g'},{n:'Orange',q:'1'},{n:'Cumin',q:'1 tsp'},{n:'Rice',q:'300g'},{n:'Black beans',q:'400g tin'},{n:'Cherry tomatoes',q:'150g'},{n:'Jalapeño',q:'1'},{n:'Cilantro',q:'bunch'}],
+        steps:['Cut pork into chunks, season with cumin, garlic, orange zest, salt.','Simmer in a pan with orange juice and a splash of water 1.5 hr until very tender. Shred.','Spread shredded pork on tray and roast at 220°C for 10–15 min until edges crisp.','Cook rice, fluff and toss with lime juice and chopped cilantro.','Build bowls: rice, warm beans, carnitas, pico de gallo, sliced jalapeño sour cream drizzle.']
+      },
+      { id:'mx4', name:'Guacamole & Chips', emoji:'🥑', type:'snack', diff:'easy', time:'10 min', cal:290, servings:4,
+        desc:'Chunky Hass guacamole with plenty of fresh lime, jalapeño, cilantro and a mountain of crispy tortilla chips.',
+        ingredients:[{n:'Ripe avocados',q:'3'},{n:'Lime',q:'2'},{n:'Jalapeño',q:'1'},{n:'Red onion',q:'¼'},{n:'Cilantro',q:'big handful'},{n:'Tomato',q:'1'},{n:'Sea salt',q:'generous'},{n:'Tortilla chips',q:'to serve'}],
+        steps:['Halve and pit avocados, scoop flesh into a wide bowl.','Mash roughly with a fork — keep it chunky, not pureed.','Finely dice jalapeño, onion and tomato. Add to bowl.','Squeeze in both limes, season very generously with salt.','Fold in torn cilantro. Taste and adjust. Serve immediately with chips.']
+      },
+      { id:'mx5', name:'Beef Enchiladas Rojas', emoji:'🫔', type:'dinner', diff:'medium', time:'50 min', cal:650, servings:4,
+        desc:'Corn tortillas stuffed with spiced ground beef, smothered in smoky chipotle tomato sauce and melted cheese.',
+        ingredients:[{n:'Corn tortillas',q:'12'},{n:'Beef mince',q:'500g'},{n:'Canned tomatoes',q:'400g'},{n:'Chipotle in adobo',q:'2 tbsp'},{n:'Cumin',q:'1 tsp'},{n:'Cheddar',q:'150g'},{n:'Sour cream',q:'to serve'}],
+        steps:['Brown beef mince with onion, garlic, cumin and seasoning until deep brown.','Blend tomatoes with chipotle for the enchilada sauce, simmer 8 min.','Warm tortillas in dry pan to make them pliable without cracking.','Fill each with beef, roll tightly, arrange seam-down in a baking dish.','Pour sauce over generously, top with cheese. Bake 200°C for 20 min until bubbling.']
+      },
+      { id:'mx6', name:'Loaded Nachos', emoji:'🧀', type:'snack', diff:'easy', time:'20 min', cal:520, servings:4,
+        desc:'Oven-baked tortilla chips piled with spiced beef, melted cheese, pickled jalapeños, pico and cool sour cream.',
+        ingredients:[{n:'Tortilla chips',q:'200g'},{n:'Beef mince',q:'250g'},{n:'Taco seasoning',q:'1 tbsp'},{n:'Cheddar',q:'200g'},{n:'Pickled jalapeños',q:'to taste'},{n:'Sour cream',q:'100ml'},{n:'Pico de gallo',q:'150g'}],
+        steps:['Cook beef mince with taco seasoning until well browned.','Spread chips in a single layer on a large oven tray.','Scatter beef evenly, then cover with grated cheese.','Bake at 200°C for 10–12 min until cheese is fully melted and starting to bubble.','Remove from oven and immediately add cold pico de gallo, pickled jalapeños and dollops of sour cream.']
+      }
+    ]
+  },
+  {
+    id:'american', name:'AMERICAN', color:'var(--american)',
+    emoji:'🍔', sub:'BBQ · Burgers · Mac & Cheese · Wings',
+    desc:'Unapologetically indulgent — smash burgers, smoked meats, melted cheese and crispy everything.',
+    recipes:[
+      { id:'am1', name:'Smash Burger', emoji:'🍔', type:'dinner', diff:'easy', time:'15 min', cal:820, servings:2,
+        desc:'Thin beef patties smashed onto a smoking griddle, double-stacked with American cheese and special sauce.',
+        ingredients:[{n:'Beef mince 80/20',q:'400g'},{n:'Brioche buns',q:'2'},{n:'American cheese slices',q:'4'},{n:'Butter',q:'1 tbsp'},{n:'Mayo',q:'2 tbsp'},{n:'Ketchup',q:'1 tbsp'},{n:'Yellow mustard',q:'1 tsp'},{n:'Pickles',q:'to taste'}],
+        steps:['Mix mayo, ketchup, mustard and a splash of pickle brine for special sauce.','Divide beef into 4 loose balls — do not compress or season yet.','Heat cast-iron skillet until smoking. Add balls, smash flat immediately with a spatula.','Cook 90 sec until a deep crust forms. Flip, add cheese, cook 45 sec.','Stack two patties per toasted bun with sauce, raw onion and pickles. Eat immediately.']
+      },
+      { id:'am2', name:'BBQ Pulled Pork Sliders', emoji:'🥩', type:'lunch', diff:'medium', time:'5 hr', cal:640, servings:6,
+        desc:'Fall-apart slow-roasted pork shoulder with a sweet-smoky rub, piled into soft rolls with tangy coleslaw.',
+        ingredients:[{n:'Pork shoulder',q:'1.5kg'},{n:'Brown sugar',q:'3 tbsp'},{n:'Smoked paprika',q:'2 tbsp'},{n:'Garlic powder',q:'1 tsp'},{n:'Slider rolls',q:'12'},{n:'Coleslaw mix',q:'300g'},{n:'Apple cider vinegar',q:'2 tbsp'},{n:'BBQ sauce',q:'to serve'}],
+        steps:['Mix sugar, paprika, garlic powder, cumin and salt for dry rub. Coat pork completely.','Roast covered at 140°C for 5 hr until completely tender and falling apart.','Rest 20 min, then shred with two forks. Toss through cooking juices.','Make slaw: mix cabbage with ACV, mayo, sugar and salt until lightly dressed.','Pile pork generously onto slider rolls, top with coleslaw and a drizzle of BBQ sauce.']
+      },
+      { id:'am3', name:'Buffalo Chicken Wings', emoji:'🍗', type:'snack', diff:'medium', time:'55 min', cal:540, servings:4,
+        desc:'Oven-crisped wings using the baking powder trick, tossed in buttery hot sauce with blue cheese dip.',
+        ingredients:[{n:'Chicken wings',q:'1kg'},{n:'Baking powder',q:'1 tbsp'},{n:'Hot sauce',q:'80ml'},{n:'Butter',q:'60g'},{n:'Garlic powder',q:'1 tsp'},{n:'Ranch or blue cheese dressing',q:'to serve'},{n:'Celery sticks',q:'to serve'}],
+        steps:['Pat wings completely dry. Toss in baking powder, garlic powder and salt.','Arrange on a rack over a tray. Refrigerate uncovered 1 hr minimum.','Bake at 130°C for 30 min, then blast at 220°C for 20 min until incredibly crispy.','Melt butter with hot sauce over low heat — do not boil.','Toss hot crispy wings in sauce until completely coated. Serve with ranch and celery.']
+      },
+      { id:'am4', name:'Three-Cheese Mac', emoji:'🧀', type:'lunch', diff:'medium', time:'35 min', cal:720, servings:4,
+        desc:'Stovetop mac and cheese with cheddar, gruyère and cream cheese — the richest, creamiest version possible.',
+        ingredients:[{n:'Elbow macaroni',q:'400g'},{n:'Sharp cheddar',q:'150g'},{n:'Gruyère',q:'100g'},{n:'Cream cheese',q:'50g'},{n:'Butter',q:'40g'},{n:'Plain flour',q:'3 tbsp'},{n:'Whole milk',q:'500ml'},{n:'Dijon mustard',q:'1 tsp'}],
+        steps:['Cook pasta to just under al dente. Reserve 100ml pasta water. Drain.','Melt butter, whisk in flour, cook 2 min until nutty. Gradually add warm milk, whisking until thick.','Off heat, stir in cream cheese until melted, then add grated cheddar, gruyère and mustard.','Fold in pasta, loosen with pasta water to reach silky, flowing consistency.','Serve as-is or top with panko and grill 5 min for a golden crust.']
+      },
+      { id:'am5', name:'Beef Chilli', emoji:'🌶️', type:'dinner', diff:'easy', time:'50 min', cal:580, servings:4,
+        desc:'Texas-style ground beef and kidney bean chilli with smoky chipotle, cumin and a secret square of dark chocolate.',
+        ingredients:[{n:'Beef mince',q:'600g'},{n:'Kidney beans',q:'400g tin'},{n:'Canned tomatoes',q:'400g'},{n:'Chipotle in adobo',q:'1 tbsp'},{n:'Cumin',q:'2 tsp'},{n:'Dark chocolate',q:'15g'},{n:'Cheddar',q:'to serve'},{n:'Sour cream',q:'to serve'}],
+        steps:['Brown beef mince in batches — never crowd the pan or it steams.','Add onion, garlic, cumin, chilli powder and chipotle. Cook 2 min until fragrant.','Add tomatoes, drained beans and 200ml water. Stir well to combine.','Simmer uncovered 35 min, stirring occasionally, until thick and rich.','Stir in dark chocolate at the very end. Serve topped with cheddar, sour cream and chives.']
+      },
+      { id:'am6', name:'Loaded Potato Skins', emoji:'🥔', type:'snack', diff:'easy', time:'60 min', cal:480, servings:4,
+        desc:'Crispy baked potato shells loaded with sharp cheddar, smoked bacon, cool sour cream and chives.',
+        ingredients:[{n:'Large baking potatoes',q:'4'},{n:'Sharp cheddar',q:'150g'},{n:'Streaky bacon',q:'8 rashers'},{n:'Sour cream',q:'100ml'},{n:'Chives',q:'bunch'},{n:'Olive oil',q:'2 tbsp'},{n:'Salt & pepper',q:'to taste'}],
+        steps:['Bake potatoes at 200°C for 45–55 min until skins are fully crisp.','Halve lengthways, scoop out most of the flesh (save it for mash later).','Brush insides and edges generously with olive oil. Season with salt and pepper.','Fill with grated cheddar and crumbled bacon bits. Bake 15 min at 220°C.','Top with cold sour cream and snipped chives. Eat immediately while the skins are still crispy.']
+      }
+    ]
+  }
+];
+
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+let currentCuisine = null;
+let currentFilter = 'all';
+let plan = {};
+
+// ── PERSISTENCE: save/load from localStorage ──
+const STORAGE_KEY_PLAN    = 'plato_plan_v1';
+const STORAGE_KEY_CUSTOM  = 'plato_custom_recipes_v1';
+
+function savePlan(){
+  try { localStorage.setItem(STORAGE_KEY_PLAN, JSON.stringify(plan)); } catch(e){}
+}
+
+function loadPlan(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PLAN);
+    if(raw) plan = JSON.parse(raw);
+  } catch(e){ plan = {}; }
+}
+
+function saveCustomRecipes(){
+  // Collect all custom recipes across cuisines
+  const customs = [];
+  CUISINES.forEach(c => {
+    c.recipes.forEach(r => {
+      if(r.custom) customs.push({...r, cuisineId: c.id});
+    });
+  });
+  try { localStorage.setItem(STORAGE_KEY_CUSTOM, JSON.stringify(customs)); } catch(e){}
+}
+
+function loadCustomRecipes(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_CUSTOM);
+    if(!raw) return;
+    const customs = JSON.parse(raw);
+    customs.forEach(r => {
+      const cuisine = CUISINES.find(c => c.id === r.cuisineId);
+      if(cuisine && !cuisine.recipes.find(x => x.id === r.id)){
+        const {cuisineId, ...recipe} = r;
+        cuisine.recipes.push(recipe);
+      }
+    });
+  } catch(e){}
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Load persisted data first
+  loadCustomRecipes();
+  loadPlan();
+
+  renderCuisineStrip();
+  renderWeekGrid();
+  updateBadge();
+
+  document.getElementById('detailBackBtn').addEventListener('click', () => {
+    showScreen('recipes');
+    setBreadcrumb([{l:'Home',fn:'goHome()'},{l:currentCuisine.name,fn:null}]);
+  });
+
+  // Register service worker only on HTTPS or localhost (not file://)
+  if('serviceWorker' in navigator && location.protocol !== 'file:'){
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+});
+
+function renderCuisineStrip(){
+  document.getElementById('cuisineStrip').innerHTML = CUISINES.map((c,i)=>`
+    <div class="cuisine-card ${c.id}" onclick="openCuisine('${c.id}')">
+      <div class="c-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="c-count">${c.recipes.length} Recipes</div>
+      <span class="c-emoji">${c.emoji}</span>
+      <h3>${c.name}</h3>
+      <div class="c-sub">${c.sub}</div>
+      <div class="c-arrow">→</div>
+    </div>
+  `).join('');
+}
+
+function openCuisine(id){
+  currentCuisine = CUISINES.find(c=>c.id===id);
+  currentFilter = 'all';
+  renderRecipeScreen();
+  showScreen('recipes');
+  setBreadcrumb([{l:'Home',fn:'goHome()'},{l:currentCuisine.name,fn:null}]);
+}
+
+function renderRecipeScreen(){
+  const c = currentCuisine;
+  document.getElementById('cuisineHeader').innerHTML = `
+    <div class="cuisine-header-left">
+      <h2 style="color:${c.color}">${c.name}</h2>
+      <p>${c.desc}</p>
+    </div>
+    <div class="cuisine-header-right">${c.emoji}</div>
+  `;
+  const types = [{k:'all',l:'All',i:'🍽'},{k:'lunch',l:'Lunch',i:'☀️'},{k:'dinner',l:'Dinner',i:'🌙'},{k:'snack',l:'Snack',i:'🍿'}];
+  document.getElementById('mealFilter').innerHTML = types.map(t=>`
+    <button class="filter-btn ${t.k} ${t.k===currentFilter?'active':''}" onclick="setFilter('${t.k}')">
+      ${t.i} ${t.l}
+    </button>
+  `).join('');
+  renderRecipeGrid();
+}
+
+function setFilter(f){
+  currentFilter = f;
+  renderRecipeScreen();
+}
+
+function renderRecipeGrid(){
+  const recipes = currentFilter==='all'
+    ? currentCuisine.recipes
+    : currentCuisine.recipes.filter(r=>r.type===currentFilter);
+
+  const cards = recipes.length ? recipes.map(r=>`
+    <div class="recipe-card" onclick="openRecipe('${r.id}')">
+      ${r.custom ? '<div class="custom-badge">Custom</div>' : ''}
+      <div class="r-top">
+        <div class="r-emoji">${r.emoji}</div>
+        <div class="r-tags">
+          <span class="tag ${r.type}">${r.type}</span>
+          <span class="tag ${r.diff}">${r.diff}</span>
+        </div>
+      </div>
+      <h4>${r.name}</h4>
+      <p class="r-desc">${r.desc}</p>
+      <div class="r-meta">
+        <span>⏱ ${r.time}</span>
+        <span>🔥 ${r.cal} kcal</span>
+        <span>👤 Serves ${r.servings}</span>
+      </div>
+      <button class="add-btn ${inPlan(r.id)?'added':''}" onclick="event.stopPropagation(); togglePlan('${r.id}')">
+        ${inPlan(r.id)?'✅ In your plan':'+ Add to weekly plan'}
+      </button>
+    </div>
+  `).join('') : `<div style="padding:48px;color:var(--muted);grid-column:1/-1;text-align:center;font-size:0.9rem;">No ${currentFilter} recipes in this cuisine.</div>`;
+
+  // Always append the "Add Recipe" card at the end
+  const addCard = `
+    <button class="add-recipe-card" onclick="openCRModal('${currentCuisine.id}')">
+      <div class="arc-icon">＋</div>
+      <div class="arc-label">Add your own recipe</div>
+      <div class="arc-sub">Create a custom recipe<br>and add it to this section</div>
+    </button>
+  `;
+
+  document.getElementById('recipeGrid').innerHTML = cards + addCard;
+}
+
+function openRecipe(id){
+  const r = allRecipes().find(x=>x.id===id);
+  const c = CUISINES.find(cu=>cu.recipes.some(rx=>rx.id===id));
+  currentCuisine = c;
+  renderDetailContent(r);
+  showScreen('detail');
+  setBreadcrumb([
+    {l:'Home',fn:'goHome()'},
+    {l:c.name,fn:`openCuisine('${c.id}')`},
+    {l:r.name,fn:null}
+  ]);
+}
+
+function renderDetailContent(r){
+  document.getElementById('detailContent').innerHTML = `
+    <div class="detail-title-row">
+      <h2>${r.name}</h2>
+      <div class="detail-emoji">${r.emoji}</div>
+    </div>
+    <p class="detail-desc">${r.desc}</p>
+    <div class="detail-stats">
+      <div class="stat"><span class="sv">${r.time}</span><div class="sl">Cook Time</div></div>
+      <div class="stat"><span class="sv">${r.cal}</span><div class="sl">Calories</div></div>
+      <div class="stat"><span class="sv">${r.servings}</span><div class="sl">Servings</div></div>
+      <div class="stat"><span class="sv">${r.diff.toUpperCase()}</span><div class="sl">Difficulty</div></div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-section">
+        <h3>Ingredients</h3>
+        <ul class="ingredient-list">
+          ${r.ingredients.map(i=>`<li>${i.n}<span class="qty">${i.q}</span></li>`).join('')}
+        </ul>
+      </div>
+      <div class="detail-section">
+        <h3>Method</h3>
+        <ol class="steps-list">
+          ${r.steps.map((s,i)=>`<li><div class="step-num">${i+1}</div><div class="step-text">${s}</div></li>`).join('')}
+        </ol>
+      </div>
+    </div>
+    <button class="detail-add-btn ${inPlan(r.id)?'added':''}" id="dab" data-rid="${r.id}">
+      ${inPlan(r.id)?'✅ Already in your weekly plan':'+ Add to weekly plan'}
+    </button>
+    <div style="text-align:center;">
+      <button class="detail-delete-btn" onclick="openDelModal('${r.id}')">🗑 Delete this recipe</button>
+    </div>
+  `;
+  document.getElementById('dab').onclick = () => {
+    togglePlan(r.id);
+    // re-render detail after modal closes (for remove case)
+    if(inPlan(r.id)){
+      const btn = document.getElementById('dab');
+      if(btn){ btn.className='detail-add-btn added'; btn.textContent='✅ Already in your weekly plan'; }
+    } else {
+      renderDetailContent(r);
+    }
+  };
+}
+
+function inPlan(id){
+  return Object.values(plan).some(d=>d.some(m=>m.id===id));
+}
+
+// ── MODAL STATE ──
+let modalRecipeId = null;
+let modalSelectedDay = null;
+
+function togglePlan(id){
+  if(inPlan(id)){
+    removeById(id);
+    showToast('Removed from plan');
+    refreshCurrentScreen();
+  } else {
+    openDayModal(id);
+  }
+}
+
+function openDayModal(id){
+  const r = allRecipes().find(x=>x.id===id);
+  modalRecipeId = id;
+  modalSelectedDay = null;
+
+  document.getElementById('modalEmoji').textContent = r.emoji;
+  document.getElementById('modalName').textContent  = r.name;
+  const typeEl = document.getElementById('modalType');
+  typeEl.textContent  = r.type.toUpperCase();
+  typeEl.className    = 'modal-recipe-type ' + r.type;
+
+  // Build day pills — show a dot if that day already has this meal type
+  document.getElementById('dayPicker').innerHTML = DAYS.map(d => {
+    const dayMeals = plan[d]||[];
+    const hasType  = dayMeals.some(m=>m.type===r.type);
+    return `
+      <button class="day-pill${hasType?' has-type':''}" data-day="${d}" onclick="selectDay('${d}')">
+        ${d}
+        ${hasType?'<div style="font-size:0.55rem;color:var(--muted);margin-top:1px">taken</div>':''}
+      </button>
+    `;
+  }).join('');
+
+  document.getElementById('modalConfirm').disabled = true;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function selectDay(day){
+  modalSelectedDay = day;
+  document.querySelectorAll('.day-pill').forEach(p=>{
+    p.classList.toggle('selected', p.dataset.day === day);
+  });
+  document.getElementById('modalConfirm').disabled = false;
+}
+
+function confirmDay(){
+  if(!modalSelectedDay || !modalRecipeId) return;
+  const r = allRecipes().find(x=>x.id===modalRecipeId);
+  if(!plan[modalSelectedDay]) plan[modalSelectedDay]=[];
+  plan[modalSelectedDay].push({id:r.id, name:r.name, emoji:r.emoji, type:r.type});
+  savePlan();
+  closeModalDirect();
+  showToast(`${r.emoji} ${r.name} → ${modalSelectedDay}`);
+  updateBadge(); renderWeekGrid();
+  refreshCurrentScreen();
+}
+
+function closeModal(e){
+  // only close if clicking the overlay itself, not the modal card
+  if(e.target === document.getElementById('modalOverlay')) closeModalDirect();
+}
+
+function closeModalDirect(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  modalRecipeId = null; modalSelectedDay = null;
+}
+
+function refreshCurrentScreen(){
+  if(document.getElementById('screen-recipes').classList.contains('active')) renderRecipeGrid();
+  if(document.getElementById('screen-detail').classList.contains('active')){
+    // Read the current recipe id from the rendered button (modalRecipeId is already null here)
+    const btn = document.getElementById('dab');
+    if(btn && btn.dataset.rid){
+      const rid = btn.dataset.rid;
+      btn.className = 'detail-add-btn ' + (inPlan(rid) ? 'added' : '');
+      btn.textContent = inPlan(rid) ? '✅ Already in your weekly plan' : '+ Add to weekly plan';
+    }
+  }
+}
+
+function addToPlan(id){ openDayModal(id); } // legacy alias
+
+function removeById(id){
+  for(const day of DAYS){
+    if(!plan[day]) continue;
+    const idx = plan[day].findIndex(m=>m.id===id);
+    if(idx!==-1){ plan[day].splice(idx,1); if(!plan[day].length) delete plan[day]; break; }
+  }
+  savePlan();
+  updateBadge(); renderWeekGrid();
+  if(document.getElementById('screen-recipes').classList.contains('active')) renderRecipeGrid();
+}
+
+function removeChip(day, idx){
+  plan[day].splice(idx,1);
+  if(!plan[day].length) delete plan[day];
+  savePlan();
+  updateBadge(); renderWeekGrid();
+}
+
+function clearPlan(){
+  plan={};
+  savePlan();
+  updateBadge(); renderWeekGrid(); showToast('Plan cleared');
+  if(document.getElementById('screen-recipes').classList.contains('active')) renderRecipeGrid();
+}
+
+function renderWeekGrid(){
+  document.getElementById('weekGrid').innerHTML = DAYS.map(d=>`
+    <div class="day-col">
+      <div class="day-head">${d}</div>
+      <div class="day-body">
+        ${(plan[d]||[]).map((m,i)=>`
+          <div class="meal-chip ${m.type}">
+            <button class="remove-chip" onclick="removeChip('${d}',${i})">✕</button>
+            <div class="chip-type">${m.type}</div>
+            <div class="chip-name">${m.emoji} ${m.name}</div>
+          </div>
+        `).join('')}
+        ${!(plan[d]&&plan[d].length)?'<div class="day-empty">No meals yet</div>':''}
+      </div>
+    </div>
+  `).join('');
+  const total = Object.values(plan).reduce((a,d)=>a+d.length,0);
+  const days  = Object.keys(plan).length;
+  document.getElementById('plannerFooter').innerHTML = `
+    <div class="footer-stat"><div class="fv">${total}</div><div class="fl">Meals Planned</div></div>
+    <div class="footer-stat"><div class="fv">${days}/7</div><div class="fl">Days Covered</div></div>
+    <div class="footer-stat"><div class="fv">${countCuisines()}</div><div class="fl">Cuisines</div></div>
+    <div class="footer-actions">
+      <button class="pill-btn" onclick="clearPlan()">Clear All</button>
+    </div>
+  `;
+}
+
+function countCuisines(){
+  const cuisineIds = new Set();
+  Object.values(plan).flatMap(d=>d).forEach(m=>{
+    const c = CUISINES.find(cu=>cu.recipes.some(r=>r.id===m.id));
+    if(c) cuisineIds.add(c.id);
+  });
+  return cuisineIds.size;
+}
+
+function updateBadge(){
+  const total = Object.values(plan).reduce((a,d)=>a+d.length,0);
+  const b = document.getElementById('planBadge');
+  b.textContent = total; b.style.display = total ? 'inline' : 'none';
+}
+
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goHome(){
+  showScreen('home');
+  setBreadcrumb([{l:'Home',fn:null}]);
+}
+
+function setBreadcrumb(items){
+  document.getElementById('breadcrumb').innerHTML = items.map((item,i)=>`
+    ${i?'<span class="sep">›</span>':''}
+    <span class="${item.fn?'crumb':'active'}" ${item.fn?`onclick="${item.fn}"`:''}>
+      ${item.l}
+    </span>
+  `).join('');
+}
+
+// ── DELETE RECIPE ──
+let delRecipeId = null;
+
+function openDelModal(id){
+  const r = allRecipes().find(x=>x.id===id);
+  if(!r) return;
+  delRecipeId = id;
+
+  // Populate the preview card inside the modal
+  document.getElementById('delPreview').innerHTML = `
+    <div class="drp-emoji">${r.emoji}</div>
+    <div class="drp-info">
+      <div class="drp-name">${r.name}</div>
+      <div class="drp-meta">
+        <span class="tag ${r.type}" style="font-size:0.6rem;padding:2px 7px;">${r.type}</span>
+        <span>⏱ ${r.time}</span>
+        <span>🔥 ${r.cal} kcal</span>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('delOverlay').classList.add('open');
+}
+
+function closeDelModal(e){
+  if(e.target === document.getElementById('delOverlay')) closeDelOverlay();
+}
+
+function closeDelOverlay(){
+  document.getElementById('delOverlay').classList.remove('open');
+  delRecipeId = null;
+}
+
+function confirmDelete(){
+  if(!delRecipeId) return;
+  const r = allRecipes().find(x=>x.id===delRecipeId);
+  if(!r){ closeDelOverlay(); return; }
+
+  // Remove from whichever cuisine owns it
+  for(const cuisine of CUISINES){
+    const idx = cuisine.recipes.findIndex(x=>x.id===delRecipeId);
+    if(idx !== -1){ cuisine.recipes.splice(idx,1); break; }
+  }
+
+  // Also remove from weekly plan if present
+  removeById(delRecipeId);
+
+  saveCustomRecipes();
+  savePlan();
+  const name = r.name;
+  closeDelOverlay();
+  showToast(`🗑 "${name}" deleted`);
+
+  // Navigate back appropriately
+  if(document.getElementById('screen-detail').classList.contains('active')){
+    showScreen('recipes');
+    if(currentCuisine) setBreadcrumb([{l:'Home',fn:'goHome()'},{l:currentCuisine.name,fn:null}]);
+  }
+  if(currentCuisine) renderRecipeScreen();
+  renderCuisineStrip();
+}
+
+// ── CUSTOM RECIPE FORM ──
+let crCuisineId = null;
+let crSelectedEmoji = '🍽';
+let crIngrCount = 0;
+let crStepCount = 0;
+
+function openCRModal(cuisineId){
+  crCuisineId = cuisineId;
+  const c = CUISINES.find(x=>x.id===cuisineId);
+
+  // Set cuisine badge
+  document.getElementById('crCuisineBadge').textContent = c.name;
+  document.getElementById('crCuisineBadge').style.borderColor = c.color;
+  document.getElementById('crCuisineBadge').style.color = c.color;
+
+  // Reset form
+  crSelectedEmoji = '🍽';
+  crIngrCount = 0;
+  crStepCount = 0;
+  document.getElementById('crName').value = '';
+  document.getElementById('crType').value = '';
+  document.getElementById('crDesc').value = '';
+  document.getElementById('crTime').value = '';
+  document.getElementById('crCal').value = '';
+  document.getElementById('crServings').value = '';
+  document.getElementById('crDiff').value = 'medium';
+  document.getElementById('emojiCustom').value = '';
+  document.querySelectorAll('.emoji-opt').forEach(b=>{
+    b.classList.toggle('selected', b.dataset.emoji==='🍽');
+  });
+
+  // Seed 3 ingredient rows and 3 step rows
+  document.getElementById('ingrList').innerHTML = '';
+  document.getElementById('stepsList').innerHTML = '';
+  for(let i=0;i<3;i++) addIngredientRow();
+  for(let i=0;i<3;i++) addStepRow();
+
+  document.getElementById('crOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('crName').focus(), 320);
+}
+
+function closeCRModal(e){
+  if(e.target === document.getElementById('crOverlay')) closeCRModalDirect();
+}
+function closeCRModalDirect(){
+  document.getElementById('crOverlay').classList.remove('open');
+}
+
+function selectEmoji(btn){
+  crSelectedEmoji = btn.dataset.emoji;
+  document.querySelectorAll('.emoji-opt').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('emojiCustom').value = '';
+}
+
+function setCustomEmoji(val){
+  if(!val) return;
+  crSelectedEmoji = val;
+  document.querySelectorAll('.emoji-opt').forEach(b=>b.classList.remove('selected'));
+}
+
+function addIngredientRow(){
+  crIngrCount++;
+  const id = crIngrCount;
+  const row = document.createElement('div');
+  row.className = 'ingr-row';
+  row.id = `ingr-${id}`;
+  row.innerHTML = `
+    <input type="text" class="ingr-name" placeholder="Ingredient name" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:Outfit,sans-serif;font-size:0.85rem;color:var(--text);outline:none;width:100%;" />
+    <input type="text" class="ingr-qty" placeholder="Amount" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:Outfit,sans-serif;font-size:0.85rem;color:var(--text);outline:none;width:100%;" />
+    <button type="button" class="cr-remove-row" onclick="removeRow('ingr-${id}')">✕</button>
+  `;
+  document.getElementById('ingrList').appendChild(row);
+}
+
+function addStepRow(){
+  crStepCount++;
+  const num = document.getElementById('stepsList').children.length + 1;
+  const id = `step-${crStepCount}`;
+  const row = document.createElement('div');
+  row.className = 'step-row';
+  row.id = id;
+  row.innerHTML = `
+    <div class="step-row-num">${num}</div>
+    <textarea placeholder="Describe this step..." rows="2" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:Outfit,sans-serif;font-size:0.85rem;color:var(--text);outline:none;width:100%;resize:vertical;line-height:1.5;"></textarea>
+    <button type="button" class="cr-remove-row" onclick="removeRow('${id}'); reNumberSteps()" style="margin-top:2px;">✕</button>
+  `;
+  document.getElementById('stepsList').appendChild(row);
+}
+
+function removeRow(id){
+  const el = document.getElementById(id);
+  if(el) el.remove();
+}
+
+function reNumberSteps(){
+  document.querySelectorAll('#stepsList .step-row-num').forEach((el,i)=>{
+    el.textContent = i+1;
+  });
+}
+
+function saveCustomRecipe(){
+  const name = document.getElementById('crName').value.trim();
+  const type = document.getElementById('crType').value;
+  const desc = document.getElementById('crDesc').value.trim();
+
+  // Validation
+  if(!name){ highlight('crName'); showToast('⚠️ Please enter a recipe name'); return; }
+  if(!type){ highlight('crType'); showToast('⚠️ Please select a meal type'); return; }
+  if(!desc){ highlight('crDesc'); showToast('⚠️ Please add a short description'); return; }
+
+  // Gather ingredients (skip blanks)
+  const ingredients = [];
+  document.querySelectorAll('#ingrList .ingr-row').forEach(row=>{
+    const n = row.querySelector('.ingr-name').value.trim();
+    const q = row.querySelector('.ingr-qty').value.trim();
+    if(n) ingredients.push({n, q: q||'—'});
+  });
+
+  // Gather steps (skip blanks)
+  const steps = [];
+  document.querySelectorAll('#stepsList .step-row textarea').forEach(ta=>{
+    const s = ta.value.trim();
+    if(s) steps.push(s);
+  });
+
+  if(ingredients.length === 0){ showToast('⚠️ Add at least one ingredient'); return; }
+  if(steps.length === 0){ showToast('⚠️ Add at least one step'); return; }
+
+  // Build recipe object
+  const uid = 'custom_' + Date.now();
+  const recipe = {
+    id: uid,
+    name,
+    emoji: crSelectedEmoji || '🍽',
+    type,
+    diff: document.getElementById('crDiff').value,
+    time: document.getElementById('crTime').value.trim() || '—',
+    cal: document.getElementById('crCal').value.trim() || '—',
+    servings: document.getElementById('crServings').value.trim() || '—',
+    desc,
+    ingredients,
+    steps,
+    custom: true
+  };
+
+  // Add to the cuisine
+  const cuisine = CUISINES.find(c=>c.id===crCuisineId);
+  cuisine.recipes.push(recipe);
+
+  saveCustomRecipes();
+  closeCRModalDirect();
+  showToast(`${recipe.emoji} "${recipe.name}" added!`);
+  renderRecipeScreen();
+  renderCuisineStrip(); // update recipe count badge
+}
+
+function highlight(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.borderColor = 'var(--italian)';
+  el.focus();
+  setTimeout(()=>el.style.borderColor='', 1800);
+}
+
+function allRecipes(){ return CUISINES.flatMap(c=>c.recipes); }
+
+// ── SYNC: EXPORT / IMPORT ──
+let pendingImportData = null;
+
+function openSyncModal(){
+  // Refresh the meta stats
+  const customCount = CUISINES.flatMap(c=>c.recipes).filter(r=>r.custom).length;
+  const planCount   = Object.values(plan).reduce((a,d)=>a+d.length, 0);
+  document.getElementById('syncMeta').innerHTML = `
+    <span><span class="meta-dot"></span> ${customCount} custom recipe${customCount!==1?'s':''}</span>
+    <span><span class="meta-dot"></span> ${planCount} planned meal${planCount!==1?'s':''}</span>
+  `;
+  resetImportUI();
+  document.getElementById('syncOverlay').classList.add('open');
+}
+
+function closeSyncModal(e){
+  if(e.target === document.getElementById('syncOverlay')) closeSyncOverlay();
+}
+function closeSyncOverlay(){
+  document.getElementById('syncOverlay').classList.remove('open');
+  pendingImportData = null;
+}
+
+function exportData(){
+  const customs = CUISINES.flatMap(c =>
+    c.recipes.filter(r=>r.custom).map(r=>({...r, cuisineId:c.id}))
+  );
+  const exportObj = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    customRecipes: customs,
+    plan: plan
+  };
+  const json = JSON.stringify(exportObj, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href     = url;
+  a.download = `plato-backup-${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📦 Backup downloaded!');
+}
+
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if(file) parseImportFile(file);
+}
+
+function handleFileSelect(e){
+  const file = e.target.files[0];
+  if(file) parseImportFile(file);
+  // Reset input so same file can be re-selected
+  e.target.value = '';
+}
+
+function parseImportFile(file){
+  if(!file.name.endsWith('.json') && file.type !== 'application/json'){
+    showToast('⚠️ Please choose a .json file');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const data = JSON.parse(e.target.result);
+      // Validate structure
+      if(typeof data !== 'object' || data.version !== 1){
+        showToast('⚠️ Invalid backup file');
+        return;
+      }
+      pendingImportData = data;
+
+      // Show preview
+      const customCount = (data.customRecipes||[]).length;
+      const planCount   = Object.values(data.plan||{}).reduce((a,d)=>a+d.length,0);
+      const date        = data.exportedAt
+        ? new Date(data.exportedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
+        : 'Unknown date';
+
+      document.getElementById('importPreviewTitle').textContent = file.name;
+      document.getElementById('importPreviewSub').innerHTML =
+        `Exported ${date} &nbsp;·&nbsp; ${customCount} custom recipe${customCount!==1?'s':''} &nbsp;·&nbsp; ${planCount} planned meal${planCount!==1?'s':''}`;
+      document.getElementById('importPreview').style.display = 'block';
+      document.getElementById('dropZone').style.display = 'none';
+    } catch(err){
+      showToast('⚠️ Could not read file — is it a valid backup?');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function confirmImport(){
+  if(!pendingImportData) return;
+  let addedRecipes = 0;
+  let addedMeals   = 0;
+
+  // Merge custom recipes (skip duplicates by id)
+  const existing = new Set(CUISINES.flatMap(c=>c.recipes.map(r=>r.id)));
+  (pendingImportData.customRecipes||[]).forEach(r => {
+    if(existing.has(r.id)) return;
+    const cuisine = CUISINES.find(c=>c.id===r.cuisineId);
+    if(!cuisine) return;
+    const {cuisineId, ...recipe} = r;
+    cuisine.recipes.push(recipe);
+    existing.add(r.id);
+    addedRecipes++;
+  });
+
+  // Merge plan (append meals, avoid exact duplicates on same day)
+  (Object.entries(pendingImportData.plan||{})).forEach(([day, meals])=>{
+    if(!plan[day]) plan[day] = [];
+    meals.forEach(m => {
+      const alreadyThere = plan[day].some(x=>x.id===m.id);
+      if(!alreadyThere){
+        plan[day].push(m);
+        addedMeals++;
+      }
+    });
+  });
+
+  saveCustomRecipes();
+  savePlan();
+  renderCuisineStrip();
+  renderWeekGrid();
+  updateBadge();
+
+  closeSyncOverlay();
+  showToast(`✅ Imported ${addedRecipes} recipe${addedRecipes!==1?'s':''}, ${addedMeals} meal${addedMeals!==1?'s':''}`);
+}
+
+function resetImportUI(){
+  pendingImportData = null;
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('dropZone').style.display = 'block';
+  const input = document.getElementById('importFileInput');
+  if(input) input.value = '';
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2400);
+}
+</script>
+</body>
+</html>
