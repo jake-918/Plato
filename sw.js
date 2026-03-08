@@ -1,13 +1,12 @@
-const CACHE_NAME = 'plato-v1';
+const CACHE_NAME = 'plato-v2';
 const ASSETS = [
-  './index.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
   'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600&display=swap'
 ];
 
-// Install: cache all core assets
+// Install: cache static assets (NOT index.html — it's always fetched fresh)
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
@@ -25,28 +24,43 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Fetch: cache-first for assets, network-first for everything else
+// Fetch strategy:
+//   index.html  → network-first (always try to get the latest, cache as fallback)
+//   everything else → cache-first (icons, fonts, manifest)
 self.addEventListener('fetch', e => {
-  // Skip non-GET and chrome-extension requests
   if (e.request.method !== 'GET') return;
   if (!e.request.url.startsWith('http')) return;
 
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(response => {
-        // Cache successful responses for app assets
-        if (response && response.status === 200 && response.type !== 'opaque') {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-        }
-        return response;
-      }).catch(() => {
-        // Offline fallback — return the main app shell
-        if (e.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      });
-    })
-  );
+  const isHTML = e.request.mode === 'navigate' ||
+    e.request.url.endsWith('index.html') ||
+    e.request.url.endsWith('/');
+
+  if (isHTML) {
+    // Network-first: always fetch fresh HTML, fall back to cache if offline
+    e.respondWith(
+      fetch(e.request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+  } else {
+    // Cache-first: serve static assets from cache, fetch if missing
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        if (cached) return cached;
+        return fetch(e.request).then(response => {
+          if (response && response.status === 200 && response.type !== 'opaque') {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+          }
+          return response;
+        });
+      })
+    );
+  }
 });
