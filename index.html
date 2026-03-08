@@ -964,6 +964,133 @@ nav {
   to { opacity:1; }
 }
 
+/* ADD CUISINE CARD */
+.add-cuisine-card {
+  border-right:1px solid var(--border); border-bottom:1px solid var(--border);
+  padding:36px 32px; cursor:pointer; position:relative;
+  transition:background 0.25s; min-height:280px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:14px; background:transparent; border-top:none; border-left:none;
+}
+.add-cuisine-card:hover { background:var(--surface); }
+.add-cuisine-card .ac-icon {
+  width:60px; height:60px; border-radius:50%;
+  border:1.5px dashed rgba(255,255,255,0.15);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.6rem; color:var(--muted);
+  transition:all 0.25s;
+}
+.add-cuisine-card:hover .ac-icon {
+  border-color:var(--italian); color:var(--italian);
+  background:rgba(232,85,58,0.08);
+}
+.add-cuisine-card .ac-label {
+  font-family:'Bebas Neue',sans-serif; font-size:1.3rem;
+  letter-spacing:0.06em; color:var(--muted);
+  transition:color 0.2s;
+}
+.add-cuisine-card:hover .ac-label { color:var(--text); }
+.add-cuisine-card .ac-sub {
+  font-size:0.72rem; color:var(--dim); text-align:center; line-height:1.5;
+}
+
+/* REMOVE CUISINE BUTTON (bottom of recipe screen) */
+.remove-cuisine-footer {
+  margin:0 40px 60px; padding-top:32px;
+  border-top:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;
+}
+.remove-cuisine-btn {
+  display:inline-flex; align-items:center; gap:7px;
+  padding:9px 18px; border-radius:100px;
+  border:1px solid rgba(232,85,58,0.28); background:transparent;
+  color:#e8553a; font-family:'Outfit',sans-serif;
+  font-size:0.8rem; font-weight:500; cursor:pointer;
+  transition:all 0.2s; letter-spacing:0.03em;
+}
+.remove-cuisine-btn:hover { background:rgba(232,85,58,0.1); border-color:#e8553a; }
+.remove-cuisine-note { font-size:0.75rem; color:var(--dim); }
+
+/* ADD CUISINE FORM MODAL — reuses cr-overlay pattern */
+.ac-overlay {
+  position:fixed; inset:0; z-index:6200;
+  background:rgba(0,0,0,0.8); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.28s ease; padding:20px;
+}
+.ac-overlay.open { opacity:1; pointer-events:all; }
+.ac-modal {
+  background:var(--surface); border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px; width:520px; max-width:100%; max-height:90vh;
+  overflow-y:auto;
+  transform:translateY(28px) scale(0.97);
+  transition:transform 0.35s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 40px 100px rgba(0,0,0,0.7);
+}
+.ac-overlay.open .ac-modal { transform:translateY(0) scale(1); }
+.ac-modal::-webkit-scrollbar { width:4px; }
+.ac-modal::-webkit-scrollbar-thumb { background:var(--dim); border-radius:4px; }
+.ac-header {
+  padding:24px 28px 20px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; background:var(--surface); z-index:2;
+}
+.ac-header h3 {
+  font-family:'Bebas Neue',sans-serif; font-size:1.6rem;
+  letter-spacing:0.06em; color:var(--text);
+}
+.ac-body { padding:24px 28px 28px; }
+
+/* Colour picker */
+.color-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+.color-opt {
+  width:32px; height:32px; border-radius:50%; cursor:pointer;
+  border:2px solid transparent; transition:all 0.15s;
+  display:flex; align-items:center; justify-content:center;
+}
+.color-opt.selected { border-color:#fff; transform:scale(1.15); }
+.color-opt:hover { transform:scale(1.1); }
+.color-custom-wrap { display:flex; align-items:center; gap:8px; margin-top:8px; }
+.color-custom-wrap input[type=color] {
+  width:36px; height:36px; border-radius:50%; border:2px solid var(--border);
+  background:none; cursor:pointer; padding:0;
+}
+.color-preview-swatch {
+  width:18px; height:18px; border-radius:50%; flex-shrink:0;
+  border:1px solid rgba(255,255,255,0.15);
+}
+
+/* DELETE CUISINE CONFIRMATION */
+.del-cuisine-overlay {
+  position:fixed; inset:0; z-index:7500;
+  background:rgba(0,0,0,0.8); backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.22s ease; padding:20px;
+}
+.del-cuisine-overlay.open { opacity:1; pointer-events:all; }
+.del-cuisine-modal {
+  background:var(--surface); border:1px solid rgba(232,85,58,0.3);
+  border-radius:18px; width:420px; max-width:100%;
+  padding:32px 28px 24px;
+  transform:translateY(20px) scale(0.97);
+  transition:transform 0.28s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 32px 80px rgba(0,0,0,0.65); text-align:center;
+}
+.del-cuisine-overlay.open .del-cuisine-modal { transform:translateY(0) scale(1); }
+.del-cuisine-name {
+  font-family:'Bebas Neue',sans-serif; font-size:2rem;
+  letter-spacing:0.06em; margin:10px 0 6px;
+}
+.del-cuisine-stats {
+  font-size:0.8rem; color:var(--muted); margin-bottom:8px;
+}
+.del-cuisine-warning {
+  font-size:0.82rem; color:var(--muted); line-height:1.65; margin-bottom:22px;
+}
+.del-cuisine-warning strong { color:#e8553a; }
+
 /* MOBILE */
 @media(max-width:900px){
   nav { padding:0 20px; }
@@ -1017,8 +1144,7 @@ nav {
     <p>Pick a cuisine, explore lunch, dinner and snack recipes — then build your perfect seven-day meal plan one dish at a time.</p>
   </div>
   <div class="cuisine-section-label">Select a Cuisine to Explore</div>
-  <div class="cuisine-strip" id="cuisineStrip"></div>
-  <div class="home-footer"><div class="home-footer-icon"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAD20lEQVR4nO2dz2oUQRDGazabdT24ipcECQtR0ECisghG8Oqz5AFEBb2LInkCDz6Az+BJVJKorK4Gc4lC8KomE8TNRnY9aJZx/nb3dHX1JN/vuDPT0/N9VdU9Mz1sQBZotVojG+1UkTAMgzLHGx98lEXPwsQM7QMgfDE6RijvCOH1UTGiptIQxDdDRbdchyC8HfIyIXMDxLdPmhGpJQji85Cmq9IYAPhIGIDo5yWuby1vI+AhqjNKkDBjAxD9bjnQGxkgTECE6JcEGSAMDBCmhvIjCzJAGBggDAwQBgYIAwOEgQHCwABhYIAwMEAYGCAMDBAGBggDA4SBAcLUpTugytaXDa3927NzTD2xS+Dr+wBdwYvw1RCvDLAtehY+meGFASrCX+pc02qz110p3McHI0QNyBNeV/Ai8gyRNELMgDTxVURfW5zJ3X519WthG2lmSJng3AAu4eNUxQinBpiIryt8nCIjpE1wZkBcfI6oz8IkG1yZ4OROWFJ81bbifXI1JWY3QFp8nTYlTHD6LEhKfJ22bU9/i2AdA6IRVEb80w+f0OTZC5nHjfq/aLj9jfY3N6j/6hntvXlBNMq+LN0xgXM8qMzDuDyC5nGamJ6hiekZal6/QYP1Lu0s36Xhz13prhXCVoJsRb8JjfkOnbz1oNS5on3mHAvqHI1zT+EG71fpx/2bREQUHGvS5PmL1Fq6QxNTZ8b7NOY71Fi4QoOPb1n7UhaWDHA1hSMiGu31afDhNYWPHyW2NeY71s7DdU3ssyBX5ef31mbit9qJU6XO6WJGdGheSdbb5xK/DXe33XdEk8rPgv6OAQvUWrqd2DZY7wr0SI9KGtC4vEhTT1/m7jP49M77AZjoEJWgKPsbPdpZvifdDSUqmQFxRnt9Gm5/p/3P/+6E157n3gn7BLsBve6K9dlE9D6AE5X3ymXxogSpPJuRPifXzSWLAT6sNqgKdS6x2rNz47tHjjLEjaunoV6UICK3ZUii5GXBakA0clwMaLZwFf1EjjOgyAQXkWmySoITJ6sidN8Lc72W1BXfxWTCSQbEL0QiE3wUn8jzhVku1gVJL8xyOgakXVheNtjIBJ/FJ6rQ4lyba0N9EP6Ayi1PN10djeXpOeADDU/AJ0oegY/0PAOfqQIWvHkaelSBAcLAAGFggDAwQBgYIAwMEKZW9v9wQTmQAcLAAGFqROX/lhuYEYZhgAwQZmwAssAtB3ojA4T5zwBkgRuiOicyACbwEtc3tQTBBB6U/9Ic2CcrqDMNQBbYI09LJZHx3ticokBWKkHIBjNUdNMWFtlQjE7AGkc2jEhiUin+ADSwoMuPhOpsAAAAAElFTkSuQmCC" alt="PLATO"></div><div class="home-footer-text"><div class="home-footer-name">PLATO</div><div class="home-footer-version">Version 1.2</div></div></div>
+  <div class="cuisine-strip" id="cuisineStrip"></div>  <div class="home-footer"><div class="home-footer-icon"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAD20lEQVR4nO2dz2oUQRDGazabdT24ipcECQtR0ECisghG8Oqz5AFEBb2LInkCDz6Az+BJVJKorK4Gc4lC8KomE8TNRnY9aJZx/nb3dHX1JN/vuDPT0/N9VdU9Mz1sQBZotVojG+1UkTAMgzLHGx98lEXPwsQM7QMgfDE6RijvCOH1UTGiptIQxDdDRbdchyC8HfIyIXMDxLdPmhGpJQji85Cmq9IYAPhIGIDo5yWuby1vI+AhqjNKkDBjAxD9bjnQGxkgTECE6JcEGSAMDBCmhvIjCzJAGBggDAwQBgYIAwOEgQHCwABhYIAwMEAYGCAMDBAGBggDA4SBAcLUpTugytaXDa3927NzTD2xS+Dr+wBdwYvw1RCvDLAtehY+meGFASrCX+pc02qz110p3McHI0QNyBNeV/Ai8gyRNELMgDTxVURfW5zJ3X519WthG2lmSJng3AAu4eNUxQinBpiIryt8nCIjpE1wZkBcfI6oz8IkG1yZ4OROWFJ81bbifXI1JWY3QFp8nTYlTHD6LEhKfJ22bU9/i2AdA6IRVEb80w+f0OTZC5nHjfq/aLj9jfY3N6j/6hntvXlBNMq+LN0xgXM8qMzDuDyC5nGamJ6hiekZal6/QYP1Lu0s36Xhz13prhXCVoJsRb8JjfkOnbz1oNS5on3mHAvqHI1zT+EG71fpx/2bREQUHGvS5PmL1Fq6QxNTZ8b7NOY71Fi4QoOPb1n7UhaWDHA1hSMiGu31afDhNYWPHyW2NeY71s7DdU3ssyBX5ef31mbit9qJU6XO6WJGdGheSdbb5xK/DXe33XdEk8rPgv6OAQvUWrqd2DZY7wr0SI9KGtC4vEhTT1/m7jP49M77AZjoEJWgKPsbPdpZvifdDSUqmQFxRnt9Gm5/p/3P/+6E157n3gn7BLsBve6K9dlE9D6AE5X3ymXxogSpPJuRPifXzSWLAT6sNqgKdS6x2rNz47tHjjLEjaunoV6UICK3ZUii5GXBakA0clwMaLZwFf1EjjOgyAQXkWmySoITJ6sidN8Lc72W1BXfxWTCSQbEL0QiE3wUn8jzhVku1gVJL8xyOgakXVheNtjIBJ/FJ6rQ4lyba0N9EP6Ayi1PN10djeXpOeADDU/AJ0oegY/0PAOfqQIWvHkaelSBAcLAAGFggDAwQBgYIAwMEKZW9v9wQTmQAcLAAGFqROX/lhuYEYZhgAwQZmwAssAtB3ojA4T5zwBkgRuiOicyACbwEtc3tQTBBB6U/9Ic2CcrqDMNQBbYI09LJZHx3ticokBWKkHIBjNUdNMWFtlQjE7AGkc2jEhiUin+ADSwoMuPhOpsAAAAAElFTkSuQmCC" alt="PLATO"></div><div class="home-footer-text"><div class="home-footer-name">PLATO</div><div class="home-footer-version">Version 1.2</div></div></div>
 </div>
 
 <!-- RECIPES -->
@@ -1027,6 +1153,7 @@ nav {
     <div class="cuisine-header" id="cuisineHeader"></div>
     <div class="meal-filter" id="mealFilter"></div>
     <div class="recipe-grid" id="recipeGrid"></div>
+    <div class="remove-cuisine-footer" id="removeCuisineFooter"></div>
   </div>
 </div>
 
@@ -1257,7 +1384,106 @@ nav {
   </div>
 </div>
 
-<!-- DELETE CONFIRMATION MODAL -->
+<!-- ADD CUISINE MODAL -->
+<div class="ac-overlay" id="acOverlay" onclick="closeACModal(event)">
+  <div class="ac-modal">
+    <div class="ac-header">
+      <h3>ADD CUISINE</h3>
+      <button class="cr-close" onclick="closeACOverlay()">✕</button>
+    </div>
+    <div class="ac-body">
+
+      <!-- Emoji -->
+      <div class="cr-field" style="margin-bottom:16px;">
+        <label>Pick an Emoji</label>
+        <div class="emoji-row" id="acEmojiRow">
+          <button type="button" class="emoji-opt selected" data-emoji="🍽" onclick="selectACEmoji(this)">🍽</button>
+          <button type="button" class="emoji-opt" data-emoji="🥘" onclick="selectACEmoji(this)">🥘</button>
+          <button type="button" class="emoji-opt" data-emoji="🍜" onclick="selectACEmoji(this)">🍜</button>
+          <button type="button" class="emoji-opt" data-emoji="🍛" onclick="selectACEmoji(this)">🍛</button>
+          <button type="button" class="emoji-opt" data-emoji="🌮" onclick="selectACEmoji(this)">🌮</button>
+          <button type="button" class="emoji-opt" data-emoji="🍔" onclick="selectACEmoji(this)">🍔</button>
+          <button type="button" class="emoji-opt" data-emoji="🥗" onclick="selectACEmoji(this)">🥗</button>
+          <button type="button" class="emoji-opt" data-emoji="🍱" onclick="selectACEmoji(this)">🍱</button>
+          <button type="button" class="emoji-opt" data-emoji="🥙" onclick="selectACEmoji(this)">🥙</button>
+          <button type="button" class="emoji-opt" data-emoji="🫕" onclick="selectACEmoji(this)">🫕</button>
+          <button type="button" class="emoji-opt" data-emoji="🍲" onclick="selectACEmoji(this)">🍲</button>
+          <button type="button" class="emoji-opt" data-emoji="🥩" onclick="selectACEmoji(this)">🥩</button>
+          <button type="button" class="emoji-opt" data-emoji="🧆" onclick="selectACEmoji(this)">🧆</button>
+          <button type="button" class="emoji-opt" data-emoji="🍕" onclick="selectACEmoji(this)">🍕</button>
+          <button type="button" class="emoji-opt" data-emoji="🌯" onclick="selectACEmoji(this)">🌯</button>
+          <input class="emoji-custom-input" id="acEmojiCustom" maxlength="2" placeholder="✏️" title="Type your own emoji" oninput="setACCustomEmoji(this.value)" />
+        </div>
+      </div>
+
+      <!-- Name -->
+      <div class="cr-row full" style="margin-bottom:14px;">
+        <div class="cr-field">
+          <label>Cuisine Name *</label>
+          <input type="text" id="acName" placeholder="e.g. French, Greek, Caribbean…" maxlength="40" />
+        </div>
+      </div>
+
+      <!-- Tagline -->
+      <div class="cr-row full" style="margin-bottom:14px;">
+        <div class="cr-field">
+          <label>Tagline <span style="color:var(--dim);font-weight:400;letter-spacing:0">(shown under name)</span></label>
+          <input type="text" id="acSub" placeholder="e.g. Croissants · Cassoulet · Coq au Vin" maxlength="60" />
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="cr-row full" style="margin-bottom:18px;">
+        <div class="cr-field">
+          <label>Description</label>
+          <textarea id="acDesc" rows="2" placeholder="A short intro to this cuisine…"></textarea>
+        </div>
+      </div>
+
+      <!-- Colour -->
+      <div class="cr-field" style="margin-bottom:22px;">
+        <label>Accent Colour</label>
+        <div class="color-row" id="acColorRow">
+          <div class="color-opt selected" data-color="#e8553a" style="background:#e8553a" onclick="selectACColor(this)" title="Red"></div>
+          <div class="color-opt" data-color="#e8a030" style="background:#e8a030" onclick="selectACColor(this)" title="Amber"></div>
+          <div class="color-opt" data-color="#4caf78" style="background:#4caf78" onclick="selectACColor(this)" title="Green"></div>
+          <div class="color-opt" data-color="#5b8de8" style="background:#5b8de8" onclick="selectACColor(this)" title="Blue"></div>
+          <div class="color-opt" data-color="#b05ce8" style="background:#b05ce8" onclick="selectACColor(this)" title="Purple"></div>
+          <div class="color-opt" data-color="#e85c9a" style="background:#e85c9a" onclick="selectACColor(this)" title="Pink"></div>
+          <div class="color-opt" data-color="#e8c830" style="background:#e8c830" onclick="selectACColor(this)" title="Yellow"></div>
+          <div class="color-opt" data-color="#30c8e8" style="background:#30c8e8" onclick="selectACColor(this)" title="Cyan"></div>
+        </div>
+        <div class="color-custom-wrap">
+          <input type="color" id="acColorPicker" value="#e8553a" oninput="setACCustomColor(this.value)" title="Custom colour">
+          <span style="font-size:0.75rem;color:var(--muted);">or pick custom</span>
+          <span class="color-preview-swatch" id="acColorSwatch" style="background:#e8553a;"></span>
+          <span id="acColorHex" style="font-size:0.72rem;color:var(--muted);font-family:monospace;">#e8553a</span>
+        </div>
+      </div>
+
+      <div class="cr-submit-row">
+        <button type="button" class="cr-cancel-btn" onclick="closeACOverlay()">Cancel</button>
+        <button type="button" class="cr-submit" onclick="saveNewCuisine()">Create Cuisine →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CUISINE CONFIRMATION -->
+<div class="del-cuisine-overlay" id="delCuisineOverlay" onclick="closeDelCuisineModal(event)">
+  <div class="del-cuisine-modal">
+    <div class="del-icon">🗑️</div>
+    <div class="del-cuisine-name" id="delCuisineName"></div>
+    <div class="del-cuisine-stats" id="delCuisineStats"></div>
+    <p class="del-cuisine-warning">This will <strong>permanently delete this entire cuisine</strong> and all its recipes. Any meals from this cuisine in your weekly plan will also be removed. This cannot be undone.</p>
+    <div class="del-actions">
+      <button class="del-cancel" onclick="closeDelCuisineOverlay()">Keep it</button>
+      <button class="del-confirm" onclick="confirmDeleteCuisine()">Yes, delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE RECIPE MODAL -->
 <div class="del-overlay" id="delOverlay" onclick="closeDelModal(event)">
   <div class="del-modal">
     <div class="del-icon">🗑️</div>
@@ -1274,7 +1500,7 @@ nav {
 <div class="toast" id="toast"></div>
 
 <script>
-const CUISINES = [
+let CUISINES = [
   {
     id:'italian', name:'ITALIAN', color:'var(--italian)',
     emoji:'🍝', sub:'Pasta · Pizza · Risotto · Chicken · 💍 New',
@@ -1436,8 +1662,9 @@ let currentFilter = 'all';
 let plan = {};
 
 // ── PERSISTENCE: save/load from localStorage ──
-const STORAGE_KEY_PLAN    = 'plato_plan_v1';
-const STORAGE_KEY_CUSTOM  = 'plato_custom_recipes_v1';
+const STORAGE_KEY_PLAN      = 'plato_plan_v1';
+const STORAGE_KEY_CUSTOM    = 'plato_custom_recipes_v1';
+const STORAGE_KEY_CUISINES  = 'plato_custom_cuisines_v1';
 
 function savePlan(){
   try { localStorage.setItem(STORAGE_KEY_PLAN, JSON.stringify(plan)); } catch(e){}
@@ -1459,6 +1686,24 @@ function saveCustomRecipes(){
     });
   });
   try { localStorage.setItem(STORAGE_KEY_CUSTOM, JSON.stringify(customs)); } catch(e){}
+}
+
+function saveCustomCuisines(){
+  const customCuisines = CUISINES.filter(c => c.custom).map(c => ({...c, recipes:[]}));
+  try { localStorage.setItem(STORAGE_KEY_CUISINES, JSON.stringify(customCuisines)); } catch(e){}
+}
+
+function loadCustomCuisines(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_CUISINES);
+    if(!raw) return;
+    const customs = JSON.parse(raw);
+    customs.forEach(c => {
+      if(!CUISINES.find(x => x.id === c.id)){
+        CUISINES.push({...c, recipes:[]});
+      }
+    });
+  } catch(e){}
 }
 
 function loadCustomRecipes(){
@@ -1486,6 +1731,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 1800);
 
   // Load persisted data first
+  loadCustomCuisines();
   loadCustomRecipes();
   loadPlan();
 
@@ -1505,16 +1751,31 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function renderCuisineStrip(){
-  document.getElementById('cuisineStrip').innerHTML = CUISINES.map((c,i)=>`
-    <div class="cuisine-card ${c.id}" onclick="openCuisine('${c.id}')">
+  const cards = CUISINES.map((c,i)=>`
+    <div class="cuisine-card ${c.custom ? 'custom-cuisine' : c.id}" onclick="openCuisine('${c.id}')"
+         style="${c.custom ? `--cc:${c.color}` : ''}">
+      ${c.custom ? `<style>
+        .cuisine-card.custom-cuisine.c-${c.id}::before{background:linear-gradient(135deg,${c.color}22,transparent);}
+        .cuisine-card.custom-cuisine.c-${c.id} h3{color:${c.color};}
+      </style>` : ''}
       <div class="c-num">${String(i+1).padStart(2,'0')}</div>
-      <div class="c-count">${c.recipes.length} Recipes</div>
+      <div class="c-count">${c.recipes.length} Recipe${c.recipes.length!==1?'s':''}</div>
       <span class="c-emoji">${c.emoji}</span>
-      <h3>${c.name}</h3>
-      <div class="c-sub">${c.sub}</div>
+      <h3 style="${c.custom?`color:${c.color}`:''}">${c.name}</h3>
+      <div class="c-sub">${c.sub||''}</div>
       <div class="c-arrow">→</div>
     </div>
   `).join('');
+
+  const addCard = `
+    <button class="add-cuisine-card" onclick="openACModal()">
+      <div class="ac-icon">＋</div>
+      <div class="ac-label">Add Cuisine</div>
+      <div class="ac-sub">Create your own<br>cuisine category</div>
+    </button>
+  `;
+
+  document.getElementById('cuisineStrip').innerHTML = cards + addCard;
 }
 
 function openCuisine(id){
@@ -1530,7 +1791,7 @@ function renderRecipeScreen(){
   document.getElementById('cuisineHeader').innerHTML = `
     <div class="cuisine-header-left">
       <h2 style="color:${c.color}">${c.name}</h2>
-      <p>${c.desc}</p>
+      <p>${c.desc||''}</p>
     </div>
     <div class="cuisine-header-right">${c.emoji}</div>
   `;
@@ -1541,6 +1802,13 @@ function renderRecipeScreen(){
     </button>
   `).join('');
   renderRecipeGrid();
+
+  // Remove cuisine footer
+  const footer = document.getElementById('removeCuisineFooter');
+  footer.innerHTML = `
+    <span class="remove-cuisine-note">${c.recipes.length} recipe${c.recipes.length!==1?'s':''} in this cuisine</span>
+    <button class="remove-cuisine-btn" onclick="openDelCuisineModal('${c.id}')">🗑 Remove this cuisine</button>
+  `;
 }
 
 function setFilter(f){
@@ -2054,6 +2322,140 @@ function highlight(id){
 
 function allRecipes(){ return CUISINES.flatMap(c=>c.recipes); }
 
+// ── ADD CUISINE ──
+let acSelectedEmoji = '🍽';
+let acSelectedColor = '#e8553a';
+
+function openACModal(){
+  // Reset
+  acSelectedEmoji = '🍽';
+  acSelectedColor = '#e8553a';
+  document.getElementById('acName').value = '';
+  document.getElementById('acSub').value = '';
+  document.getElementById('acDesc').value = '';
+  document.getElementById('acEmojiCustom').value = '';
+  document.getElementById('acColorPicker').value = '#e8553a';
+  document.getElementById('acColorSwatch').style.background = '#e8553a';
+  document.getElementById('acColorHex').textContent = '#e8553a';
+  document.querySelectorAll('#acEmojiRow .emoji-opt').forEach(b=>{
+    b.classList.toggle('selected', b.dataset.emoji==='🍽');
+  });
+  document.querySelectorAll('#acColorRow .color-opt').forEach(b=>{
+    b.classList.toggle('selected', b.dataset.color==='#e8553a');
+  });
+  document.getElementById('acOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('acName').focus(), 320);
+}
+
+function closeACModal(e){
+  if(e.target === document.getElementById('acOverlay')) closeACOverlay();
+}
+function closeACOverlay(){
+  document.getElementById('acOverlay').classList.remove('open');
+}
+
+function selectACEmoji(btn){
+  acSelectedEmoji = btn.dataset.emoji;
+  document.querySelectorAll('#acEmojiRow .emoji-opt').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('acEmojiCustom').value = '';
+}
+function setACCustomEmoji(val){
+  if(!val) return;
+  acSelectedEmoji = val;
+  document.querySelectorAll('#acEmojiRow .emoji-opt').forEach(b=>b.classList.remove('selected'));
+}
+
+function selectACColor(el){
+  acSelectedColor = el.dataset.color;
+  document.querySelectorAll('#acColorRow .color-opt').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('acColorPicker').value = acSelectedColor;
+  document.getElementById('acColorSwatch').style.background = acSelectedColor;
+  document.getElementById('acColorHex').textContent = acSelectedColor;
+}
+function setACCustomColor(val){
+  acSelectedColor = val;
+  document.querySelectorAll('#acColorRow .color-opt').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('acColorSwatch').style.background = val;
+  document.getElementById('acColorHex').textContent = val;
+}
+
+function saveNewCuisine(){
+  const name = document.getElementById('acName').value.trim();
+  if(!name){ highlight('acName'); showToast('⚠️ Please enter a cuisine name'); return; }
+
+  const id = 'cuisine_' + Date.now();
+  const cuisine = {
+    id,
+    name: name.toUpperCase(),
+    color: acSelectedColor,
+    emoji: acSelectedEmoji || '🍽',
+    sub:   document.getElementById('acSub').value.trim(),
+    desc:  document.getElementById('acDesc').value.trim(),
+    recipes: [],
+    custom: true
+  };
+
+  CUISINES.push(cuisine);
+  saveCustomCuisines();
+  closeACOverlay();
+  renderCuisineStrip();
+  showToast(`${cuisine.emoji} "${cuisine.name}" cuisine added!`);
+}
+
+// ── DELETE CUISINE ──
+let delCuisineId = null;
+
+function openDelCuisineModal(id){
+  const c = CUISINES.find(x=>x.id===id);
+  if(!c) return;
+  delCuisineId = id;
+  document.getElementById('delCuisineName').textContent = c.name;
+  document.getElementById('delCuisineName').style.color = c.color;
+  const planCount = Object.values(plan).flatMap(d=>d).filter(m=>c.recipes.some(r=>r.id===m.id)).length;
+  document.getElementById('delCuisineStats').textContent =
+    `${c.recipes.length} recipe${c.recipes.length!==1?'s':''} · ${planCount} meal${planCount!==1?'s':''} in your plan`;
+  document.getElementById('delCuisineOverlay').classList.add('open');
+}
+function closeDelCuisineModal(e){
+  if(e.target === document.getElementById('delCuisineOverlay')) closeDelCuisineOverlay();
+}
+function closeDelCuisineOverlay(){
+  document.getElementById('delCuisineOverlay').classList.remove('open');
+  delCuisineId = null;
+}
+function confirmDeleteCuisine(){
+  if(!delCuisineId) return;
+  const c = CUISINES.find(x=>x.id===delCuisineId);
+  if(!c){ closeDelCuisineOverlay(); return; }
+
+  // Remove all this cuisine's recipes from plan
+  c.recipes.forEach(r => {
+    for(const day of DAYS){
+      if(!plan[day]) continue;
+      plan[day] = plan[day].filter(m=>m.id!==r.id);
+      if(!plan[day].length) delete plan[day];
+    }
+  });
+
+  // Remove cuisine from array
+  const idx = CUISINES.findIndex(x=>x.id===delCuisineId);
+  if(idx !== -1) CUISINES.splice(idx, 1);
+
+  saveCustomCuisines();
+  saveCustomRecipes();
+  savePlan();
+  updateBadge();
+  renderWeekGrid();
+
+  const name = c.name;
+  closeDelCuisineOverlay();
+  showToast(`🗑 "${name}" cuisine removed`);
+  goHome();
+  renderCuisineStrip();
+}
+
 // ── SYNC: EXPORT / IMPORT ──
 let pendingImportData = null;
 
@@ -2081,9 +2483,11 @@ function exportData(){
   const customs = CUISINES.flatMap(c =>
     c.recipes.filter(r=>r.custom).map(r=>({...r, cuisineId:c.id}))
   );
+  const customCuisines = CUISINES.filter(c=>c.custom).map(c=>({...c, recipes:[]}));
   const exportObj = {
     version: 1,
     exportedAt: new Date().toISOString(),
+    customCuisines,
     customRecipes: customs,
     plan: plan
   };
@@ -2132,15 +2536,20 @@ function parseImportFile(file){
       pendingImportData = data;
 
       // Show preview
-      const customCount = (data.customRecipes||[]).length;
-      const planCount   = Object.values(data.plan||{}).reduce((a,d)=>a+d.length,0);
-      const date        = data.exportedAt
+      const customCount  = (data.customRecipes||[]).length;
+      const cuisineCount = (data.customCuisines||[]).length;
+      const planCount    = Object.values(data.plan||{}).reduce((a,d)=>a+d.length,0);
+      const date         = data.exportedAt
         ? new Date(data.exportedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
         : 'Unknown date';
 
       document.getElementById('importPreviewTitle').textContent = file.name;
+      const parts = [];
+      if(cuisineCount) parts.push(`${cuisineCount} cuisine${cuisineCount!==1?'s':''}`);
+      if(customCount)  parts.push(`${customCount} recipe${customCount!==1?'s':''}`);
+      if(planCount)    parts.push(`${planCount} planned meal${planCount!==1?'s':''}`);
       document.getElementById('importPreviewSub').innerHTML =
-        `Exported ${date} &nbsp;·&nbsp; ${customCount} custom recipe${customCount!==1?'s':''} &nbsp;·&nbsp; ${planCount} planned meal${planCount!==1?'s':''}`;
+        `Exported ${date} &nbsp;·&nbsp; ${parts.join(' &nbsp;·&nbsp; ') || 'Empty backup'}`;
       document.getElementById('importPreview').style.display = 'block';
       document.getElementById('dropZone').style.display = 'none';
     } catch(err){
@@ -2152,8 +2561,18 @@ function parseImportFile(file){
 
 function confirmImport(){
   if(!pendingImportData) return;
-  let addedRecipes = 0;
-  let addedMeals   = 0;
+  let addedCuisines = 0;
+  let addedRecipes  = 0;
+  let addedMeals    = 0;
+
+  // Merge custom cuisines first (so recipes have a home)
+  const existingCuisineIds = new Set(CUISINES.map(c=>c.id));
+  (pendingImportData.customCuisines||[]).forEach(c => {
+    if(existingCuisineIds.has(c.id)) return;
+    CUISINES.push({...c, recipes:[]});
+    existingCuisineIds.add(c.id);
+    addedCuisines++;
+  });
 
   // Merge custom recipes (skip duplicates by id)
   const existing = new Set(CUISINES.flatMap(c=>c.recipes.map(r=>r.id)));
@@ -2179,6 +2598,7 @@ function confirmImport(){
     });
   });
 
+  saveCustomCuisines();
   saveCustomRecipes();
   savePlan();
   renderCuisineStrip();
@@ -2186,7 +2606,11 @@ function confirmImport(){
   updateBadge();
 
   closeSyncOverlay();
-  showToast(`✅ Imported ${addedRecipes} recipe${addedRecipes!==1?'s':''}, ${addedMeals} meal${addedMeals!==1?'s':''}`);
+  const parts = [];
+  if(addedCuisines) parts.push(`${addedCuisines} cuisine${addedCuisines!==1?'s':''}`);
+  if(addedRecipes)  parts.push(`${addedRecipes} recipe${addedRecipes!==1?'s':''}`);
+  if(addedMeals)    parts.push(`${addedMeals} meal${addedMeals!==1?'s':''}`);
+  showToast(`✅ Imported ${parts.length ? parts.join(', ') : 'nothing new'}`);
 }
 
 function resetImportUI(){
