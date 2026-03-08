@@ -957,7 +957,7 @@ nav {
   font-size:0.72rem; font-weight:600; letter-spacing:0.22em;
   text-transform:uppercase; color:var(--muted);
   opacity:0;
-  animation:splashSubIn 0.5s ease 1.1s forwards;
+  animation:splashSubIn 0.6s ease 1.1s forwards;
   margin-top:18px;
 }
 @keyframes splashSubIn {
@@ -1091,6 +1091,10 @@ nav {
 }
 .del-cuisine-warning strong { color:#e8553a; }
 
+.mute-btn { font-size:0.85rem; padding:0 10px; opacity:0.6; transition:opacity 0.2s; }
+.mute-btn:hover { opacity:1; }
+.mute-btn.muted { opacity:0.35; }
+
 /* MOBILE */
 @media(max-width:900px){
   nav { padding:0 20px; }
@@ -1121,9 +1125,11 @@ nav {
   <div class="splash-sub">Meal Planner</div>
 </div>
 
+
 <nav>
   <div class="nav-logo" onclick="goHome()">PL<em>A</em>TO</div>
   <div class="nav-right">
+    <button class="pill-btn mute-btn" id="muteBtn" onclick="toggleMute()" title="Toggle sounds">🔊</button>
     <button class="pill-btn" onclick="openSyncModal()" title="Export / Import data">⇅ Sync</button>
     <button class="pill-btn" onclick="showScreen('planner')">
       📅 My Week <span class="plan-badge" id="planBadge">0</span>
@@ -1726,7 +1732,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     const splash = document.getElementById('splash');
     splash.classList.add('hidden');
-    // Remove from DOM after fade-out so it doesn't block interaction
     setTimeout(() => splash.remove(), 650);
   }, 1800);
 
@@ -1740,6 +1745,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateBadge();
 
   document.getElementById('detailBackBtn').addEventListener('click', () => {
+    SFX.back();
     showScreen('recipes');
     setBreadcrumb([{l:'Home',fn:'goHome()'},{l:currentCuisine.name,fn:null}]);
   });
@@ -1779,6 +1785,7 @@ function renderCuisineStrip(){
 }
 
 function openCuisine(id){
+  SFX.open();
   currentCuisine = CUISINES.find(c=>c.id===id);
   currentFilter = 'all';
   renderRecipeScreen();
@@ -1857,6 +1864,7 @@ function renderRecipeGrid(){
 }
 
 function openRecipe(id){
+  SFX.click();
   const r = allRecipes().find(x=>x.id===id);
   const c = CUISINES.find(cu=>cu.recipes.some(rx=>rx.id===id));
   currentCuisine = c;
@@ -1958,6 +1966,7 @@ function openDayModal(id){
 
   document.getElementById('modalConfirm').disabled = true;
   document.getElementById('modalOverlay').classList.add('open');
+  SFX.pop();
 }
 
 function selectDay(day){
@@ -1970,6 +1979,7 @@ function selectDay(day){
 
 function confirmDay(){
   if(!modalSelectedDay || !modalRecipeId) return;
+  SFX.success();
   const r = allRecipes().find(x=>x.id===modalRecipeId);
   if(!plan[modalSelectedDay]) plan[modalSelectedDay]=[];
   plan[modalSelectedDay].push({id:r.id, name:r.name, emoji:r.emoji, type:r.type});
@@ -2017,6 +2027,7 @@ function removeById(id){
 }
 
 function removeChip(day, idx){
+  SFX.remove();
   plan[day].splice(idx,1);
   if(!plan[day].length) delete plan[day];
   savePlan();
@@ -2024,6 +2035,7 @@ function removeChip(day, idx){
 }
 
 function clearPlan(){
+  SFX.remove();
   plan={};
   savePlan();
   updateBadge(); renderWeekGrid(); showToast('Plan cleared');
@@ -2080,6 +2092,7 @@ function showScreen(name){
 }
 
 function goHome(){
+  SFX.back();
   showScreen('home');
   setBreadcrumb([{l:'Home',fn:null}]);
 }
@@ -2128,6 +2141,7 @@ function closeDelOverlay(){
 
 function confirmDelete(){
   if(!delRecipeId) return;
+  SFX.remove();
   const r = allRecipes().find(x=>x.id===delRecipeId);
   if(!r){ closeDelOverlay(); return; }
 
@@ -2306,6 +2320,7 @@ function saveCustomRecipe(){
   cuisine.recipes.push(recipe);
 
   saveCustomRecipes();
+  SFX.success();
   closeCRModalDirect();
   showToast(`${recipe.emoji} "${recipe.name}" added!`);
   renderRecipeScreen();
@@ -2399,6 +2414,7 @@ function saveNewCuisine(){
 
   CUISINES.push(cuisine);
   saveCustomCuisines();
+  SFX.success();
   closeACOverlay();
   renderCuisineStrip();
   showToast(`${cuisine.emoji} "${cuisine.name}" cuisine added!`);
@@ -2450,6 +2466,7 @@ function confirmDeleteCuisine(){
   renderWeekGrid();
 
   const name = c.name;
+  SFX.remove();
   closeDelCuisineOverlay();
   showToast(`🗑 "${name}" cuisine removed`);
   goHome();
@@ -2619,6 +2636,218 @@ function resetImportUI(){
   document.getElementById('dropZone').style.display = 'block';
   const input = document.getElementById('importFileInput');
   if(input) input.value = '';
+}
+
+// ── SOUND ENGINE — Warm Kitchen Sounds (Web Audio API) ──
+const SFX = (() => {
+  let ctx = null;
+  let muted = false;
+
+  function getCtx(){
+    if(!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if(ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+
+  // Utility: shaped noise burst
+  function noise(ac, duration, shape = (i, len) => 1 - i/len){
+    const len = Math.floor(ac.sampleRate * duration);
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const d   = buf.getChannelData(0);
+    for(let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * shape(i, len);
+    const src = ac.createBufferSource();
+    src.buffer = buf;
+    return src;
+  }
+
+  // 🔪 Knife chop — navigation / button clicks
+  function click(){
+    if(muted) return;
+    try {
+      const ac = getCtx();
+      // Sharp transient: short filtered noise burst
+      const src  = noise(ac, 0.055, (i, len) => Math.pow(1 - i/len, 1.8));
+      const filt = ac.createBiquadFilter();
+      filt.type = 'bandpass';
+      filt.frequency.value = 3200;
+      filt.Q.value = 0.6;
+      const g = ac.createGain();
+      g.gain.setValueAtTime(0.22, ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.055);
+      src.connect(filt); filt.connect(g); g.connect(ac.destination);
+      src.start();
+
+      // Woody "thock" body tone underneath
+      const o = ac.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(320, ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(180, ac.currentTime + 0.04);
+      const og = ac.createGain();
+      og.gain.setValueAtTime(0.14, ac.currentTime);
+      og.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.05);
+      o.connect(og); og.connect(ac.destination);
+      o.start(); o.stop(ac.currentTime + 0.06);
+    } catch(e){}
+  }
+
+  // 🫕 Pan set-down thud — opening a cuisine or recipe
+  function open(){
+    if(muted) return;
+    try {
+      const ac = getCtx();
+      // Deep pan clunk — low resonant thud
+      const o = ac.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(110, ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(55, ac.currentTime + 0.25);
+      const og = ac.createGain();
+      og.gain.setValueAtTime(0.28, ac.currentTime);
+      og.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.3);
+      o.connect(og); og.connect(ac.destination);
+      o.start(); o.stop(ac.currentTime + 0.32);
+
+      // Metal rim click on top of thud
+      const src  = noise(ac, 0.03, (i, len) => Math.pow(1 - i/len, 3));
+      const filt = ac.createBiquadFilter();
+      filt.type = 'highpass'; filt.frequency.value = 5000;
+      const ng = ac.createGain(); ng.gain.value = 0.12;
+      src.connect(filt); filt.connect(ng); ng.connect(ac.destination);
+      src.start();
+    } catch(e){}
+  }
+
+  // 🥄 Wooden spoon stir + gentle tap — back / home navigation
+  function back(){
+    if(muted) return;
+    try {
+      const ac = getCtx();
+      // Soft wooden hollow tap
+      const o = ac.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(480, ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(300, ac.currentTime + 0.08);
+      const og = ac.createGain();
+      og.gain.setValueAtTime(0.13, ac.currentTime);
+      og.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.1);
+      o.connect(og); og.connect(ac.destination);
+      o.start(); o.stop(ac.currentTime + 0.12);
+
+      // Subtle brush noise (spoon scrape)
+      const src  = noise(ac, 0.09, (i, len) => (i/len) * Math.pow(1 - i/len, 2) * 4);
+      const filt = ac.createBiquadFilter();
+      filt.type = 'bandpass'; filt.frequency.value = 900; filt.Q.value = 0.5;
+      const ng = ac.createGain(); ng.gain.value = 0.07;
+      src.connect(filt); filt.connect(ng); ng.connect(ac.destination);
+      src.start();
+    } catch(e){}
+  }
+
+  // 🫧 Gentle sizzle burst — adding meal to plan / saving
+  function success(){
+    if(muted) return;
+    try {
+      const ac = getCtx();
+      // Initial sizzle — oil hitting pan
+      const sizzle = noise(ac, 0.32, (i, len) => {
+        const t = i / len;
+        return Math.pow(t < 0.08 ? t/0.08 : Math.pow(1 - (t - 0.08)/0.92, 1.4), 1);
+      });
+      const filt = ac.createBiquadFilter();
+      filt.type = 'bandpass'; filt.frequency.value = 4500; filt.Q.value = 0.3;
+      const ng = ac.createGain(); ng.gain.value = 0.16;
+      sizzle.connect(filt); filt.connect(ng); ng.connect(ac.destination);
+      sizzle.start();
+
+      // High sizzle layer (more air)
+      const sizzle2 = noise(ac, 0.28, (i, len) => {
+        const t = i / len;
+        return t < 0.05 ? t/0.05 : Math.pow(1 - (t-0.05)/0.95, 2);
+      });
+      const filt2 = ac.createBiquadFilter();
+      filt2.type = 'highpass'; filt2.frequency.value = 7000;
+      const ng2 = ac.createGain(); ng2.gain.value = 0.09;
+      sizzle2.connect(filt2); filt2.connect(ng2); ng2.connect(ac.destination);
+      sizzle2.start();
+
+      // Satisfying little "ting" at the end (pan ring)
+      setTimeout(() => {
+        try {
+          const ac2 = getCtx();
+          const o   = ac2.createOscillator();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(1760, ac2.currentTime);
+          const og = ac2.createGain();
+          og.gain.setValueAtTime(0.10, ac2.currentTime);
+          og.gain.exponentialRampToValueAtTime(0.001, ac2.currentTime + 0.4);
+          o.connect(og); og.connect(ac2.destination);
+          o.start(); o.stop(ac2.currentTime + 0.42);
+        } catch(e){}
+      }, 120);
+    } catch(e){}
+  }
+
+  // 🗑 Bin liner scrunch / dull thud — delete / remove
+  function remove(){
+    if(muted) return;
+    try {
+      const ac = getCtx();
+      // Scrunch: shaped mid-range noise
+      const src  = noise(ac, 0.18, (i, len) => {
+        const t = i / len;
+        return t < 0.1 ? t/0.1 : Math.pow(1 - (t-0.1)/0.9, 1.2);
+      });
+      const filt = ac.createBiquadFilter();
+      filt.type = 'bandpass'; filt.frequency.value = 800; filt.Q.value = 1.2;
+      const ng = ac.createGain(); ng.gain.value = 0.18;
+      src.connect(filt); filt.connect(ng); ng.connect(ac.destination);
+      src.start();
+
+      // Low thud underneath
+      const o = ac.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(90, ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(50, ac.currentTime + 0.15);
+      const og = ac.createGain();
+      og.gain.setValueAtTime(0.20, ac.currentTime);
+      og.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.18);
+      o.connect(og); og.connect(ac.destination);
+      o.start(); o.stop(ac.currentTime + 0.2);
+    } catch(e){}
+  }
+
+  // 🔔 Gentle bowl ting — modal pop open
+  function pop(){
+    if(muted) return;
+    try {
+      const ac = getCtx();
+      // Ceramic bowl ring
+      const o = ac.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(920, ac.currentTime);
+      const o2 = ac.createOscillator();
+      o2.type = 'sine';
+      o2.frequency.setValueAtTime(1480, ac.currentTime); // partial harmonic
+      const mix = ac.createGain(); mix.gain.value = 1;
+      const env = ac.createGain();
+      env.gain.setValueAtTime(0.12, ac.currentTime);
+      env.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.45);
+      o.connect(mix); o2.connect(mix); mix.connect(env); env.connect(ac.destination);
+      o.start(); o2.start();
+      o.stop(ac.currentTime + 0.5); o2.stop(ac.currentTime + 0.5);
+    } catch(e){}
+  }
+
+  return { click, open, success, remove, back, pop,
+    toggleMute(){ muted = !muted; return muted; },
+    isMuted(){ return muted; }
+  };
+})();
+
+function toggleMute(){
+  const muted = SFX.toggleMute();
+  const btn   = document.getElementById('muteBtn');
+  btn.textContent = muted ? '🔇' : '🔊';
+  btn.classList.toggle('muted', muted);
 }
 
 function showToast(msg){
